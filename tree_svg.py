@@ -1,9 +1,10 @@
 import svgwrite
+from visualizer import *
 
 """
 Creates SVG file visualizing given tree
 
-TODO: add values to tree nodes
+TODO: add better values to tree nodes
 """
 
 class Tree():
@@ -21,18 +22,14 @@ class Tree():
     def add_child(self, t):
         self.children.append(t);
 
-class TreeVisualizer():
+    def get_children(self):
+        return self.children
+
+class TreeVisualizer(Visualizer):
     
     def __init__(self, svg_doc):
-        self.svg_doc = svg_doc
-        self.nodes = []
+        Visualizer.__init__(self, svg_doc)
         self.width_dict = {}
-
-    def __str__(self):
-        return self.svg_doc.tostring()
-
-    def save(self):
-        self.svg_doc.save()
 
     def _width(self, root, radius, node_sep):
         if root in self.width_dict:
@@ -41,7 +38,7 @@ class TreeVisualizer():
             width = 2*radius + 2*node_sep
         else:
             width = 0
-            for c in root.children:
+            for c in root.get_children():
                width += self._width(c, radius, node_sep)
             assert width > 0
         self.width_dict[root] = width
@@ -55,10 +52,7 @@ class TreeVisualizer():
         if level_nodes != None:
             sub_widths = []
             for subtree in level_nodes:
-                try:
-                    sub_width = self.width_dict[subtree]
-                except KeyError:
-                    sub_width = self._width(subtree, radius, node_sep)
+                sub_width = self._width(subtree, radius, node_sep)
                 sub_widths.append(sub_width)
             level_length = sum(sub_widths)
             y = parent_center[1]+edge_length
@@ -68,7 +62,7 @@ class TreeVisualizer():
                 sub_width = sub_widths[i]
                 x = far_x_bound + sub_width/2
                 far_x_bound = far_x_bound + sub_width
-                self._draw((x,y), subtree.children, value=subtree.value, **kwargs)
+                self._draw((x,y), subtree.get_children(), value=subtree.value, **kwargs)
                 top = (x, y-radius)
                 edge = self.svg_doc.line(start = parent_center,
                                          end = top,
@@ -86,8 +80,8 @@ class TreeVisualizer():
         self.svg_doc.add(parent_node)
             
         if value:
+            #prints value in node, imperfect
             text_str = str(value)
-            #text_insert_x = center[0]-10*(len(text_str)-1)
             if len(text_str) <= 2:
                 text_size = '40px'
                 text_insert_x = parent_center[0] - 12*len(text_str)
@@ -104,7 +98,8 @@ class TreeVisualizer():
             self.svg_doc.add(text)
 
     def draw(self, root, center, **kwargs):
-        self._draw(center, root.children, value=root.value, **kwargs)
+        self._draw(center, root.get_children(), value=root.value, **kwargs)
+        self.width_dict = {}
 
 def main():
 
@@ -133,9 +128,6 @@ def main():
 
     print()
     print(tree_vis2)
-    print(tree_vis2.width_dict)
-    for key, val in tree_vis2.width_dict.items():
-        print(key.value, val)
 
     tree_vis2.save()
 
