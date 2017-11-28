@@ -25,17 +25,30 @@ ObjectTableReference = collections.namedtuple("ObjectTableReference", ("uid",))
 Snapshot = collections.namedtuple("Snapshot", ("names", "obj_table"))
 
 class DataStructure(metaclass=abc.ABCMeta):
-    # __metaclass__ = abc.ABCMeta
+    def __init__(self, uid=None, metadata=None):
+        self.uid = uid
+        if metadata is not None:
+            self.metadata = metadata
+        else:
+            self.metadata = {}
+
+    def same_object(self, other):
+        """Does `other` represent the same object, possibly at a different
+        moment in time?
+
+        The values of `self.__eq__(other)` and `self.same_object(other)`
+        are independent.
+        """
+        return type(self) == type(other) and self.uid == other.uid
+
     @abc.abstractmethod
     def untablify(self, obj_table):
         """
-        Replace attribute that are ObjectTableReferences with the actual
+        Replace attribute that are `ObjectTableReference`s with the actual
         object in the table.  This allows us to defer assignment until
-        everything is defined, so we can have syntax equivalent to
-        x = [x]
-        {x|array|x}
+        everything is defined, so circular references can never cause problems.
         """
-        pass  # no attributes on superclass
+        pass
 
 # make int and float literals appear to be DataStructure subclasses
 DataStructure.register(int)
@@ -50,28 +63,34 @@ class Pointer(DataStructure):
 
 class Array(collections.UserList, DataStructure):
     """An array data structure"""
+    def __init__(self, *args, **kwargs):
+        collections.UserList.__init__(self, *args)
+        DataStructure.__init__(self, **kwargs)
 
     def untablify(self, obj_table):
         # UserList has its underlying list accessible as a member
         self.data = [obj_table[elt] for elt in self.data]
 
-class Null(DataStructure):
-    """A null value.  Similar to python's None.  Should only ever be instantiated once."""
-    __instance = None
+class _Singleton(abc.ABCMeta):
+    # Embarassingly copied from https://stackoverflow.com/questions/6760685
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class NullType(DataStructure, metaclass=_Singleton):
+    """A null value.  Similar to python's None.  Fun to make."""
     def __init__(self):
-        if type(self).__instance is not None:
-            return type(self).__instance
-        else:
-            type(self).__instance = self
-            return super().__init__()
+        super().__init__(uid="#null")
+        del self.metadata  # no static dictionary allowed
 
     def untablify(self, obj_table):
         pass
     def __bool__(self):
         return False
-# Ensure that future attempts to make a Null will fail:
-Null = Null()
 
+Null = NullType()
 
 class LinkedListNode(DataStructure):
     def __init__(self, value, successor=Null):
@@ -88,8 +107,6 @@ class Graph(DataStructure):
         self.edges = edges
 
     def untablify(self, obj_table):
-        print(self.nodes)
-        print(self.edges)
         self.nodes = [obj_table[n] for n in self.nodes]
         self.edges = [obj_table[e] for e in self.edges]
 
@@ -104,15 +121,10 @@ class Node(DataStructure):
         # self.edges = list(obj_table[e] for e in self.edges)
 
 class Edge(DataStructure):
-    def __init__(self, orig, dest, data=Null, metadata=None):
-        # The use of both Null and None is intentional, since metadata should
-        # not be a DataStructure.
+    def __init__(self, orig, dest, data=Null):
         self.orig = orig
         self.dest = dest
         self.data = data
-        self.metadata = metadata
-        if self.metadata is None:
-            self.metadata = {}
 
     def untablify(self, obj_table):
         self.orig = obj_table[self.orig]
@@ -121,18 +133,16 @@ class Edge(DataStructure):
 
 class Widget(DataStructure):
     # Potentially our most useful DataStructure
-    def __init__(self, metadata=None):
-        # metadata might be useful, e.g. if we want 2 types of widgets
-        if metadata is None:
-            self.metadata = {}
-        else:
-            self.metadata = metadata
+
+    def __eq__(self, other):
+        return isinstance(other, Widget)
 
     def untablify(self, obj_table):
         pass
 
 class BinaryTree(DataStructure):
-    def __init__(self, root):
+    def __init__(self, root, **kwargs):
+        super().__init__(**kwargs)
         self.root = root
 
     def untablify(self, obj_table):

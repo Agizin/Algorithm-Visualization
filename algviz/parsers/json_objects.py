@@ -2,35 +2,42 @@ import json
 from . import structures
 
 class Tokens:
-    # The same key used in a different context (i.e. a block of different type) might deserve a different symbol.
+    """Tokens we expect to see in the JSON"""
+    # First, keys we expect to see.
     UID = "uid"
     TYPE = "type"
+    FROM = "from"
     TO = "to"
     LEFT = "left"
     RIGHT = "right"
-    FROM = "from"
     DATA = "data"
     GRAPH_NODES = "nodes"  # not a type, but an attribute of a graph
     GRAPH_EDGES = "edges"
+    VARNAME = "var"
     METADATA = "metadata"  # we probably should only use this for prototyping
     TREE_ROOT = "root"
-    VARNAME = "var"  # the name of an object.  The VARNAME is what the user gives us to specify what we should draw.
-    # Possible values for TYPE.  (Keep these alphabetized, please.)
-    ARRAY = "array"
-    BINARY_TREE = "bintree"
-    BINARY_TREE_NODE = "btnode"
-    EDGE = "edge"
-    GRAPH = "graph"
-    NODE = "node"
-    NULL = "null"
-    POINTER = "ptr"
-    STRING = "string"
-    WIDGET = "widget"
+    # Possible values for TYPE.  Keep these alphabetized and give them all the
+    # _T suffix, please.
+    ARRAY_T = "array"
+    BINARY_TREE_T = "bintree"
+    BINARY_TREE_NODE_T = "btnode"
+    EDGE_T = "edge"
+    GRAPH_T = "graph"
+    NODE_T = "node"
+    NULL_T = "null"
+    POINTER_T = "ptr"
+    STRING_T = "string"
+    WIDGET_T = "widget"
 
 aliases = {
     # Shorter forms of tokens, to make it easier to handwrite these descriptions
     "T": Tokens.TYPE,
 }
+
+_type_tokens = tuple(getattr(Tokens, name) for name in dir(Tokens)
+                     if name.endswith("_T") and not name.startswith("_"))
+_key_tokens = tuple(getattr(Tokens, name) for name in dir(Tokens)
+                    if not name.startswith("_") and not name.endswith("_T"))
 
 class JSONObjectError(Exception):
     pass
@@ -46,10 +53,7 @@ class Dispatcher(type):
         return _decorate
 
     def __init__(cls, name, bases, namespace):
-        # print(cls)
-        # print(bases)
         cls._dispatcher = {}
-        # cls._dispatch = lambda self, x: getattr(self, self._dispatcher[x])
         def _dispatch(self, key):
             if key not in self._dispatcher:
                 raise JSONObjectError("{} is an invalid key or is not handled by {}"
@@ -64,19 +68,20 @@ class Dispatcher(type):
         return super(Dispatcher, cls).__init__(name, bases, namespace)
 
 class SnapshotDecoder(metaclass=Dispatcher):
-    # __metaclass__ = Dispatcher
 
-    def __init__(self, *args, **kwargs):
-        # at time of writing, args and kwargs should probably be empty
-        self.objects = []  # maybe redundant
-        self.table = structures.ObjectTable(*args, **kwargs)
+    def __init__(self):
+        self.table = structures.ObjectTable()
         self.namespace = {}
         self._next_auto_uid = 0
 
-    def auto_uid(self):
-        result = "#{}".format(self._next_auto_uid)  # user-supplied tokens may not contain "#"
-        self._next_auto_uid += 1
-        return result
+    def _auto_uid(self, type_=None):
+        if type_ == Tokens.NULL_T:
+            return structures.Null.uid
+        else:
+            # Guaranteed unique because user-supplied tokens may not contain "#"
+            result = "#{}".format(self._next_auto_uid)
+            self._next_auto_uid += 1
+            return result
 
     def obj_hook(self, obj):
         if isinstance(obj, str):
@@ -84,69 +89,66 @@ class SnapshotDecoder(metaclass=Dispatcher):
         elif isinstance(obj, (list, float, int)):
             # note that we may return a structures.Array if obj is a dict with "type": "array"
             return obj
-        # fix_aliases(obj)
+        elif not isinstance(obj, dict):
+            raise TypeError("Expected a dict but got {!r}".format(obj))
         # call the appropriate method for the type of the thing
-        ref = structures.ObjectTableReference(obj.get(Tokens.UID,
-                                                      self.auto_uid()))
-        assert isinstance(obj[Tokens.TYPE], str), obj
-        self.table[ref] = self._dispatch(obj[Tokens.TYPE])(obj)
+        ref = structures.ObjectTableReference(
+            obj.get(Tokens.UID, self._auto_uid(type_=obj.get(Tokens.TYPE))))
+        # assert isinstance(obj[Tokens.TYPE], str), obj  # Should happen during validation
+        self.table[ref] = self._dispatch(obj[Tokens.TYPE])(
+            obj, uid=ref.uid, metadata=obj.get(Tokens.METADATA))
         if Tokens.VARNAME in obj:
             self.namespace[obj[Tokens.VARNAME]] = ref
         return self.table[ref]
 
-    # def tabulate(self, ref, obj):
-    #     assert isinstance(ref, (structures.ObjectTableReference, str))
-    #     if isinstance(ref, structures.ObjectTableReference):
-    #         self.table[ref] = obj
-    #     elif isinstance(ref, str):
-    #         self.table[structures.ObjectTableReference(ref)] = obj
+    @Dispatcher.dispatch(Tokens.ARRAY_T)
+    def array_hook(self, array, **kwargs):
+        return structures.Array(array[Tokens.DATA], **kwargs)
 
-    @Dispatcher.dispatch(Tokens.ARRAY)
-    def array_hook(self, array):
-        return structures.Array(array[Tokens.DATA])
-
-    @Dispatcher.dispatch(Tokens.BINARY_TREE)
-    def binary_tree_hook(self, bintree):
+    @Dispatcher.dispatch(Tokens.BINARY_TREE_T)
+    def binary_tree_hook(self, bintree, **kwargs):
         return structures.BinaryTree(root=bintree[Tokens.TREE_ROOT])
 
-    @Dispatcher.dispatch(Tokens.BINARY_TREE_NODE)
-    def binary_tree_node_hook(self, btnode):
+    @Dispatcher.dispatch(Tokens.BINARY_TREE_NODE_T)
+    def binary_tree_node_hook(self, btnode, **kwargs):
         return structures.BinaryTreeNode(
             btnode.get(Tokens.DATA, structures.Null),
             left=btnode.get(Tokens.LEFT),
             right=btnode.get(Tokens.RIGHT),
         )
 
-    @Dispatcher.dispatch(Tokens.EDGE)
-    def edge_hook(self, edge):
+    @Dispatcher.dispatch(Tokens.EDGE_T)
+    def edge_hook(self, edge, **kwargs):
         return structures.Edge(edge[Tokens.FROM], edge[Tokens.TO],
                                data=edge.get(Tokens.DATA, structures.Null),
-                               metadata=edge.get(Tokens.METADATA, None))
+                               metadata=edge.get(Tokens.METADATA, None),
+                               **kwargs)
 
-    @Dispatcher.dispatch(Tokens.GRAPH)
-    def graph_hook(self, graph):
-        return structures.Graph(graph[Tokens.GRAPH_NODES], graph[Tokens.GRAPH_EDGES])
+    @Dispatcher.dispatch(Tokens.GRAPH_T)
+    def graph_hook(self, graph, **kwargs):
+        return structures.Graph(graph[Tokens.GRAPH_NODES],
+                                graph[Tokens.GRAPH_EDGES], **kwargs)
 
-    @Dispatcher.dispatch(Tokens.NODE)
-    def node_hook(self, node):
+    @Dispatcher.dispatch(Tokens.NODE_T)
+    def node_hook(self, node, **kwargs):
         return structures.Node(node.get(Tokens.DATA, structures.Null),
                                node.get(Tokens.GRAPH_EDGES, None))
 
-    @Dispatcher.dispatch(Tokens.NULL)
-    def null_hook(self, null):
+    @Dispatcher.dispatch(Tokens.NULL_T)
+    def null_hook(self, null, **kwargs):
         return structures.Null
 
-    @Dispatcher.dispatch(Tokens.POINTER)
-    def pointer_hook(self, ptr):
-        return structures.Pointer(ptr[Tokens.DATA])
+    @Dispatcher.dispatch(Tokens.POINTER_T)
+    def pointer_hook(self, ptr, **kwargs):
+        return structures.Pointer(ptr[Tokens.DATA], **kwargs)
 
-    @Dispatcher.dispatch(Tokens.STRING)
-    def string_hook(self, string):
+    @Dispatcher.dispatch(Tokens.STRING_T)
+    def string_hook(self, string, **kwargs):
         return structures.String(string[Tokens.DATA])
 
-    @Dispatcher.dispatch(Tokens.WIDGET)
-    def widget_hook(self, widget):
-        return structures.Widget(widget.metadata)
+    @Dispatcher.dispatch(Tokens.WIDGET_T)
+    def widget_hook(self, widget, **kwargs):
+        return structures.Widget(**kwargs)
 
     def finalize(self):
         self.table.finalize()
@@ -167,25 +169,17 @@ def post_order_visit(node, visit=lambda x: x, skip=lambda x: []):
         # node is a str, int, float
         return visit(node)
 
-# keys_to_skip = frozenset((
-#     Tokens.STRING,  # the value of a 
-
-# def should_skip_json_node(parent_key, key):
-#     if parent_key == Tokens.STRING and :
-#         #  on our first pass, we should ignore
-
 def json_keys_to_skip(json_node):
     # Some nodes shouldn't be visited during our post_order_visit
     if not isinstance(json_node, dict):
         pass
     else:
-        # METADATA holds extra information like the direction of an edge in a
-        # binary tree
+        # These string values shouldn't be turned into ObjectTableReferences
         yield Tokens.TYPE
+        yield Tokens.VARNAME
         yield Tokens.UID
         yield Tokens.METADATA
-        yield Tokens.VARNAME
-        if json_node.get(Tokens.TYPE) == Tokens.STRING:
+        if json_node.get(Tokens.TYPE) == Tokens.STRING_T:
             yield Tokens.DATA  # don't turn a string literal into a label
 
 def decode_json(text):
@@ -215,7 +209,7 @@ def validate(json_stuff):
     # TODO open an issue for this.
     # This is just for example:
     if isinstance(json_stuff, dict):
-        if json_stuff.get(Tokens.TYPE) == Tokens.NULL:
+        if json_stuff.get(Tokens.TYPE) == Tokens.NULL_T:
             validate_null(json_stuff)
 
 def parse(text):

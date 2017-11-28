@@ -1,5 +1,5 @@
-import structures
 import unittest
+from . import structures
 
 class DataStructuresTestCase(unittest.TestCase):
 
