@@ -59,7 +59,7 @@ class Visualizer():
         """text defined by center point"""
         
         kwargs = self._add_defaults(**kwargs)
-        self.svg_doc.text(text, center, text_nachor="middle", dominant_baseline="central")
+        self.svg_doc.text(text, center, text_anchor="middle", dominant_baseline="central")
         #note: some image viewers don't recognize the dominant_baseline attribute
 
     #TODO: arrows, regular polygons, text along a line
