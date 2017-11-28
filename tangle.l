@@ -6,13 +6,14 @@
 			
 %%
 
-<READING>"```"		BEGIN(0);
-<READING>.		putchar(*yytext);
-"```{CDUMP}"[^\n]*\n	BEGIN(READING);
-"```{DUMPTO "		BEGIN(RFNAME);
-<RFNAME>[^}]+		fflush(stdout), freopen(yytext, "a", stdout);
-<RFNAME>\}[^\n]*\n	BEGIN(READING);
-.			;
+<READING>\n"#algviz enddump"	BEGIN(0);
+<READING>.			putchar(*yytext);
+\n"#algviz cdump"[^\n]*\n       BEGIN(READING);
+\n"#algviz dumpto"[ \t]+        BEGIN(RFNAME);
+<RFNAME>[^\n]+			fflush(stdout), freopen(yytext, "a", stdout),\
+				fprintf(stderr, "%s\n", yytext);
+<RFNAME>\n			BEGIN(READING);
+.				;
 
 %%
 int yywrap(void) {return(1);}
