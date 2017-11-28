@@ -55,11 +55,17 @@ DataStructure.register(int)
 DataStructure.register(float)
 
 class Pointer(DataStructure):
-    def __init__(self, referand):
-        self.referand = referand
+    def __init__(self, referent, **kwargs):
+        super().__init__(**kwargs)
+        self.referent = referent
+
+    def __eq__(self, other):
+        # Usually we want to compare pointers by UID, not by the value of referent.
+        # However, these __eq__ methods are very useful for testing
+        return isinstance(other, Pointer) and other.referent == self.referent
 
     def untablify(self, obj_table):
-        self.referand = obj_table[self.referand]
+        self.referent = obj_table[self.referent]
 
 class Array(collections.UserList, DataStructure):
     """An array data structure"""
@@ -87,8 +93,12 @@ class NullType(DataStructure, metaclass=_Singleton):
 
     def untablify(self, obj_table):
         pass
+
     def __bool__(self):
         return False
+
+    def __repr__(self):
+        return "Null"
 
 Null = NullType()
 
@@ -102,7 +112,8 @@ class LinkedListNode(DataStructure):
         self.successor = obj_table[self.successor]
 
 class Graph(DataStructure):
-    def __init__(self, nodes, edges):
+    def __init__(self, nodes, edges, **kwargs):
+        super().__init__(**kwargs)
         self.nodes = nodes
         self.edges = edges
 
@@ -111,17 +122,18 @@ class Graph(DataStructure):
         self.edges = [obj_table[e] for e in self.edges]
 
 class Node(DataStructure):
-    def __init__(self, data, edges, metadata=None):
+    def __init__(self, data, **kwargs):
+        super().__init__(**kwargs)
         self.data = data
         # self.edges = edges  # no storing edges, I guess.  TODO: discuss this with people
-        self.metadata = {} if metadata is None else metadata
 
     def untablify(self, obj_table):
         self.data = obj_table[self.data]
         # self.edges = list(obj_table[e] for e in self.edges)
 
 class Edge(DataStructure):
-    def __init__(self, orig, dest, data=Null):
+    def __init__(self, orig, dest, data=Null, **kwargs):
+        super().__init__(**kwargs)
         self.orig = orig
         self.dest = dest
         self.data = data
@@ -151,13 +163,14 @@ class BinaryTree(DataStructure):
     def __eq__(self, other):
         return isinstance(other, BinaryTree) and self.root == other.root
 
-# class BinaryTreeEdge(Edge):
-#     pass
+    def __repr__(self):
+        return "bintree(uid={},root={!r})".format(self.uid, self.root)
 
 class BinaryTreeNode(DataStructure):
 
-    def __init__(self, data, left=None, right=None):
+    def __init__(self, data, left=None, right=None, **kwargs):
         # We don't handle storing data on the edges.  If somebody wants it, we'll add it.
+        super().__init__(**kwargs)
         if left is None:
             left = Null
         if right is None:
@@ -177,7 +190,14 @@ class BinaryTreeNode(DataStructure):
                 other.left == self.left and
                 other.right == self.right)
 
+    def __repr__(self):
+        return "btnode(uid={},{},left={!r},right={!r})".format(
+            self.uid, self.data, self.left, self.right)
+
 class String(collections.UserString, DataStructure):
+    def __init__(self, *args, **kwargs):
+        collections.UserString.__init__(self, *args)
+        DataStructure.__init__(self, **kwargs)
     def untablify(self, obj_table):
         pass
 

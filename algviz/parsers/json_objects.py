@@ -107,7 +107,7 @@ class SnapshotDecoder(metaclass=Dispatcher):
 
     @Dispatcher.dispatch(Tokens.BINARY_TREE_T)
     def binary_tree_hook(self, bintree, **kwargs):
-        return structures.BinaryTree(root=bintree[Tokens.TREE_ROOT])
+        return structures.BinaryTree(root=bintree[Tokens.TREE_ROOT], **kwargs)
 
     @Dispatcher.dispatch(Tokens.BINARY_TREE_NODE_T)
     def binary_tree_node_hook(self, btnode, **kwargs):
@@ -115,13 +115,13 @@ class SnapshotDecoder(metaclass=Dispatcher):
             btnode.get(Tokens.DATA, structures.Null),
             left=btnode.get(Tokens.LEFT),
             right=btnode.get(Tokens.RIGHT),
+            **kwargs
         )
 
     @Dispatcher.dispatch(Tokens.EDGE_T)
     def edge_hook(self, edge, **kwargs):
         return structures.Edge(edge[Tokens.FROM], edge[Tokens.TO],
                                data=edge.get(Tokens.DATA, structures.Null),
-                               metadata=edge.get(Tokens.METADATA, None),
                                **kwargs)
 
     @Dispatcher.dispatch(Tokens.GRAPH_T)
@@ -132,7 +132,7 @@ class SnapshotDecoder(metaclass=Dispatcher):
     @Dispatcher.dispatch(Tokens.NODE_T)
     def node_hook(self, node, **kwargs):
         return structures.Node(node.get(Tokens.DATA, structures.Null),
-                               node.get(Tokens.GRAPH_EDGES, None))
+                               **kwargs)
 
     @Dispatcher.dispatch(Tokens.NULL_T)
     def null_hook(self, null, **kwargs):
@@ -144,7 +144,7 @@ class SnapshotDecoder(metaclass=Dispatcher):
 
     @Dispatcher.dispatch(Tokens.STRING_T)
     def string_hook(self, string, **kwargs):
-        return structures.String(string[Tokens.DATA])
+        return structures.String(string[Tokens.DATA], **kwargs)
 
     @Dispatcher.dispatch(Tokens.WIDGET_T)
     def widget_hook(self, widget, **kwargs):

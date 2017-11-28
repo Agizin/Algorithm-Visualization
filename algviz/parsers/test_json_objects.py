@@ -136,12 +136,14 @@ class GenericDecodingTestCase(unittest.TestCase):
                                 "metadata": self.expected_metadata,
                                 "uid": self.expected_uid}]
         self.expected_object = structures.Widget()
+        self.unexpected_object = structures.Null
 
     def test_has_proper_metadata(self):
         self.assertEqual(self.actual_object.metadata, self.expected_metadata)
 
     def test_matches_expected_object(self):
         self.assertEqual(self.actual_object, self.expected_object)
+        self.assertNotEqual(self.actual_object, self.unexpected_object)
 
     def test_has_proper_uid(self):
         self.assertEqual(self.actual_object.uid, self.expected_uid)
@@ -154,6 +156,7 @@ class ArrayDecodingTestCase(GenericDecodingTestCase):
             "data": [1, 2, 3, 4, {"T": "string", "data": "hello"}],
         }]
         self.expected_object = structures.Array([1, 2, 3, 4, structures.String("hello")])
+        self.unexpected_object = structures.Array([1, 2, 3, 4, structures.String("goodbye")])
 
 class BinaryTreeDecodingTestCase(GenericDecodingTestCase):
 
@@ -171,17 +174,99 @@ class BinaryTreeDecodingTestCase(GenericDecodingTestCase):
         self.expected_object = structures.BinaryTree(
             root=structures.BinaryTreeNode(
                 structures.Null,
-                left=structures.BinaryTree(3)))
+                left=structures.BinaryTreeNode(3)))
+        self.unexpected_object = structures.BinaryTree(
+            root=structures.BinaryTreeNode(
+                structures.Null,
+                right=structures.BinaryTreeNode(3)))
 
-class BinaryTreeDecodingTestCase(GenericDecodingTestCase):
+class NullDecodingTestCase(GenericDecodingTestCase):
     expected_uid = "#null"
 
     def set_up_expectations(self):
         self.snapshot_input = [{"T": "null"}]
         self.expected_object = structures.Null
+        self.unexpected_object = structures.Pointer(structures.Null)
 
     def test_has_proper_metadata(self):
         self.assertIs(getattr(self.actual_object, "metadata", None), None)
+
+class StringDecodingTestCase(GenericDecodingTestCase):
+
+    def set_up_expectations(self):
+        text = "Blah blah blah \n \\weird stuff\\\\"
+        self.snapshot_input = [{"T": "string",
+                                "uid": self.expected_uid,
+                                "metadata": self.expected_metadata,
+                                "data": text}]
+        self.expected_object = structures.String(text)
+        self.unexpected_object = structures.String("abcdefg")
+
+class PointerDecodingTestCase(GenericDecodingTestCase):
+
+    def set_up_expectations(self):
+        self.snapshot_input = [
+            {"T": "array", "uid": "asdf", "data": [1, 2, 3, 4, 5]},
+            {"T": "ptr", "uid": self.expected_uid, "data": "asdf",
+             "metadata": self.expected_metadata}
+        ]
+        self.expected_object = structures.Pointer(structures.Array([1, 2, 3, 4, 5]))
+        self.unexpected_object = structures.Pointer(self.expected_object)
+
+class GraphDecodingTestCase(GenericDecodingTestCase):
+    def set_up_expectations(self):
+        self.snapshot_input = [
+            {"T": "graph", "uid": self.expected_uid, "metadata": self.expected_metadata,
+             "nodes": [
+                 {"T": "node", "uid": "n0", "data": 0},
+                 {"T": "node", "uid": "n1", "data": {"T": "ptr", "data": 3}},
+                 {"T": "node", "uid": "n2", "data": 10},
+             ],
+             "edges": [
+                 {"T": "edge", "from": "n0", "to": "n1"},
+                 {"T": "edge", "from": "n0", "to": "n2"},
+                 {"T": "edge", "from": "n2", "to": "n2", "data": 100},
+                 {"T": "edge", "from": "n2", "to": "n0"},
+             ]}]
+        n0 = structures.Node(0)
+        n1 = structures.Node(structures.Pointer(3))
+        n2 = structures.Node(10)
+        e0 = structures.Edge(n0, n1)
+        e1 = structures.Edge(n0, n2)
+        e2 = structures.Edge(n2, n2, data=100)
+        e3 = structures.Edge(n2, n0)
+
+        self.expected_object = structures.Graph(
+            nodes=[n0, n1, n2],
+            edges=[e0, e1, e2, e3])  # order shouldn't matter, but it does
+        self.unexpected_object = structures.Graph(
+            nodes=[n0, n1, n2],
+            edges=[e0, e1, structures.Edge(n2, n2), e3])
+
+    @unittest.expectedFailure
+    def test_matches_expected_object(self):
+        super().test_matches_expected_object()
+
+    def _rough_graph_equality_check(self, G, H):
+        # Test two graphs for equality, badly
+        def _which_node(graph, n):
+            return graph.nodes.index(n)
+        def _edge_tuple(graph, e):
+            return (_which_node(graph, e.orig),
+                    _which_node(graph, e.dest),
+                    e.data)
+        return (len(G.nodes) == len(H.nodes) and
+                all(g.data == h.data for g, h in zip(G.nodes, H.nodes)) and
+                len(G.edges) == len(H.edges) and
+                all(_edge_tuple(G, g) == _edge_tuple(H, h)
+                    for g, h in zip(G.edges, H.edges)))
+
+    def test_probably_matches_expected_object(self):
+        self.assertTrue(self._rough_graph_equality_check(self.actual_object,
+                                                         self.expected_object))
+        self.assertFalse(self._rough_graph_equality_check(self.actual_object,
+                                                          self.unexpected_object))
+
 
 if __name__ == "__main__":
     unittest.main()
