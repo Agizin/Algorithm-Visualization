@@ -6,6 +6,15 @@ class ObjectTable(dict):
 
     May be extended later for more interesting parser behaviors.
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self[ObjectTableReference(Null.uid)] = Null
+
+    def __setitem__(self, key, val):
+        if not isinstance(key, ObjectTableReference):
+            raise TypeError("Key must be an `ObjectTableReference`, not {}".format(key))
+        return super().__setitem__(key, val)
+
     def __getitem__(self, key):
         if isinstance(key, ObjectTableReference):
             return super().__getitem__(key)
@@ -50,6 +59,12 @@ class DataStructure(metaclass=abc.ABCMeta):
         """
         pass
 
+    def __eq__(self, other):
+        return (isinstance(other, DataStructure) and
+                # registered subclasses may have no uid attribute
+                hasattr(other, "uid") and
+                other.uid == self.uid)
+
 # make int and float literals appear to be DataStructure subclasses
 DataStructure.register(int)
 DataStructure.register(float)
@@ -62,7 +77,9 @@ class Pointer(DataStructure):
     def __eq__(self, other):
         # Usually we want to compare pointers by UID, not by the value of referent.
         # However, these __eq__ methods are very useful for testing
-        return isinstance(other, Pointer) and other.referent == self.referent
+        return (super().__eq__(other) and
+                isinstance(other, Pointer) and
+                other.referent == self.referent)
 
     def untablify(self, obj_table):
         self.referent = obj_table[self.referent]
@@ -76,6 +93,11 @@ class Array(collections.UserList, DataStructure):
     def untablify(self, obj_table):
         # UserList has its underlying list accessible as a member
         self.data = [obj_table[elt] for elt in self.data]
+
+    def __eq__(self, other):
+        return (isinstance(other, Array) and
+                DataStructure.__eq__(self, other) and
+                collections.UserList.__eq__(self, other))
 
 class _Singleton(abc.ABCMeta):
     # Embarassingly copied from https://stackoverflow.com/questions/6760685
@@ -100,6 +122,9 @@ class NullType(DataStructure, metaclass=_Singleton):
     def __repr__(self):
         return "Null"
 
+    def __hash__(self):
+        return hash(self.uid)
+
 Null = NullType()
 
 class LinkedListNode(DataStructure):
@@ -114,12 +139,18 @@ class LinkedListNode(DataStructure):
 class Graph(DataStructure):
     def __init__(self, nodes, edges, **kwargs):
         super().__init__(**kwargs)
-        self.nodes = nodes
-        self.edges = edges
+        self.nodes = frozenset(nodes)
+        self.edges = frozenset(edges)
 
     def untablify(self, obj_table):
-        self.nodes = [obj_table[n] for n in self.nodes]
-        self.edges = [obj_table[e] for e in self.edges]
+        self.nodes = frozenset(obj_table[n] for n in self.nodes)
+        self.edges = frozenset(obj_table[e] for e in self.edges)
+
+    def __eq__(self, other):
+        return (isinstance(other, Graph) and
+                super().__eq__(other) and
+                self.nodes == other.nodes and
+                self.edges == other.edges)
 
 class Node(DataStructure):
     def __init__(self, data, **kwargs):
@@ -130,6 +161,14 @@ class Node(DataStructure):
     def untablify(self, obj_table):
         self.data = obj_table[self.data]
         # self.edges = list(obj_table[e] for e in self.edges)
+
+    def __eq__(self, other):
+        return (super().__eq__(other) and
+                isinstance(other, Node) and
+                other.data == self.data)
+
+    def __hash__(self):
+        return hash(self.uid)
 
 class Edge(DataStructure):
     def __init__(self, orig, dest, data=Null, **kwargs):
@@ -143,65 +182,53 @@ class Edge(DataStructure):
         self.dest = obj_table[self.dest]
         self.data = obj_table[self.data]
 
+    def __eq__(self, other):
+        return (super().__eq__(other) and
+                isinstance(other, Edge) and
+                other.orig == self.orig and
+                other.dest == self.dest and
+                other.data == self.data)
+
+    def __hash__(self):
+        return hash((self.orig, self.dest, self.uid))
+
 class Widget(DataStructure):
     # Potentially our most useful DataStructure
-
+    # Represents a `void` or "don't care" type.
     def __eq__(self, other):
-        return isinstance(other, Widget)
+        return isinstance(other, Widget) and super().__eq__(other)
 
     def untablify(self, obj_table):
         pass
 
-class BinaryTree(DataStructure):
-    def __init__(self, root, **kwargs):
+class TreeNode(DataStructure):
+    """A node with some number of children in a fixed order.  Edges are implicit."""
+    # A common superclass could be used for linked-list nodes, since linked
+    # lists are just skinny trees
+    def __init__(self, data, children=None, **kwargs):
         super().__init__(**kwargs)
-        self.root = root
-
-    def untablify(self, obj_table):
-        self.root = obj_table[self.root]
-
-    def __eq__(self, other):
-        return isinstance(other, BinaryTree) and self.root == other.root
-
-    def __repr__(self):
-        return "bintree(uid={},root={!r})".format(self.uid, self.root)
-
-class BinaryTreeNode(DataStructure):
-
-    def __init__(self, data, left=None, right=None, **kwargs):
-        # We don't handle storing data on the edges.  If somebody wants it, we'll add it.
-        super().__init__(**kwargs)
-        if left is None:
-            left = Null
-        if right is None:
-            right = Null
-        self.left = left
-        self.right = right
         self.data = data
+        self.children = [] if children is None else children
 
     def untablify(self, obj_table):
-        self.left = obj_table[self.left]
-        self.right = obj_table[self.right]
         self.data = obj_table[self.data]
+        self.children = [obj_table[child] for child in self.children]
 
     def __eq__(self, other):
-        return (isinstance(other, BinaryTreeNode) and
-                other.data == self.data and
-                other.left == self.left and
-                other.right == self.right)
-
-    def __repr__(self):
-        return "btnode(uid={},{},left={!r},right={!r})".format(
-            self.uid, self.data, self.left, self.right)
+        return (super().__eq__(other) and
+                isinstance(other, TreeNode) and
+                self.data == other.data and
+                self.children == other.children)
 
 class String(collections.UserString, DataStructure):
     def __init__(self, *args, **kwargs):
         collections.UserString.__init__(self, *args)
         DataStructure.__init__(self, **kwargs)
+
     def untablify(self, obj_table):
         pass
 
-# class Struct(DataStructure):
-#     """A bunch of stuff all in one place"""
-#     # def __init__(self
-#     TODO
+    def __eq__(self, other):
+        return (isinstance(other, String) and
+                DataStructure.__eq__(self, other) and
+                collections.UserString.__eq__(self, other))

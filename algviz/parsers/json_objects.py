@@ -8,19 +8,16 @@ class Tokens:
     TYPE = "type"
     FROM = "from"
     TO = "to"
-    LEFT = "left"
-    RIGHT = "right"
+    CHILDREN = "children"  # children of a tree node
     DATA = "data"
     GRAPH_NODES = "nodes"  # not a type, but an attribute of a graph
     GRAPH_EDGES = "edges"
     VARNAME = "var"
     METADATA = "metadata"  # we probably should only use this for prototyping
-    TREE_ROOT = "root"
     # Possible values for TYPE.  Keep these alphabetized and give them all the
     # _T suffix, please.
     ARRAY_T = "array"
-    BINARY_TREE_T = "bintree"
-    BINARY_TREE_NODE_T = "btnode"
+    TREE_NODE_T = "treenode"
     EDGE_T = "edge"
     GRAPH_T = "graph"
     NODE_T = "node"
@@ -43,16 +40,21 @@ class JSONObjectError(Exception):
     pass
 
 class Dispatcher(type):
-
     @staticmethod
     def dispatch(key):
-        # decorate an object
+        """Decorate a method of class `X`, where the metaclass of X must be Dispatcher.
+
+        `X.dispatch(key)` will return the decorated method.
+        """
         def _decorate(f):
             f._purpose = key
             return f
         return _decorate
 
     def __init__(cls, name, bases, namespace):
+        """Muck about with the class under construction to give it the desired
+        `dispatch` function.
+        """
         cls._dispatcher = {}
         def _dispatch(self, key):
             if key not in self._dispatcher:
@@ -68,13 +70,16 @@ class Dispatcher(type):
         return super(Dispatcher, cls).__init__(name, bases, namespace)
 
 class SnapshotDecoder(metaclass=Dispatcher):
-
+    """Decodes a list of json objects and eventually produces a snapshot with
+    the `finalize` method.
+    """
     def __init__(self):
         self.table = structures.ObjectTable()
         self.namespace = {}
         self._next_auto_uid = 0
 
     def _auto_uid(self, type_=None):
+        # Produce a suitable UID if the user didn't specify one.
         if type_ == Tokens.NULL_T:
             return structures.Null.uid
         else:
@@ -105,18 +110,11 @@ class SnapshotDecoder(metaclass=Dispatcher):
     def array_hook(self, array, **kwargs):
         return structures.Array(array[Tokens.DATA], **kwargs)
 
-    @Dispatcher.dispatch(Tokens.BINARY_TREE_T)
-    def binary_tree_hook(self, bintree, **kwargs):
-        return structures.BinaryTree(root=bintree[Tokens.TREE_ROOT], **kwargs)
-
-    @Dispatcher.dispatch(Tokens.BINARY_TREE_NODE_T)
-    def binary_tree_node_hook(self, btnode, **kwargs):
-        return structures.BinaryTreeNode(
-            btnode.get(Tokens.DATA, structures.Null),
-            left=btnode.get(Tokens.LEFT),
-            right=btnode.get(Tokens.RIGHT),
-            **kwargs
-        )
+    @Dispatcher.dispatch(Tokens.TREE_NODE_T)
+    def tree_node_hook(self, tree_node, **kwargs):
+        return structures.TreeNode(data=tree_node.get(Tokens.DATA, structures.Null),
+                                   children=tree_node.get(Tokens.CHILDREN),
+                                   **kwargs)
 
     @Dispatcher.dispatch(Tokens.EDGE_T)
     def edge_hook(self, edge, **kwargs):
@@ -156,7 +154,7 @@ class SnapshotDecoder(metaclass=Dispatcher):
                           for key, val in self.namespace.items()}
         return structures.Snapshot(obj_table=self.table, names=self.namespace)
 
-def post_order_visit(node, visit=lambda x: x, skip=lambda x: []):
+def post_order_visit(node, visit=lambda x: x, skip=lambda x: ()):
     # traverse the dictionary.  post-order traversal
     if isinstance(node, dict):
         keys_to_skip = tuple(skip(node))
@@ -188,11 +186,6 @@ def decode_json(text):
     # If no exception has been raised, then we have a list of snapshots in chronological order.
     snapshots = []
     for raw_snapshot in raw_stuff:
-        # sd = SnapshotDecoder()
-        # for raw_obj in raw_snapshot:
-        #     post_order_visit(raw_obj,
-        #                      visit=sd.obj_hook,
-        #                      skip=json_keys_to_skip)
         snapshots.append(decode_snapshot(*raw_snapshot))
     return snapshots
 
