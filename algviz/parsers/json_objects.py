@@ -88,7 +88,7 @@ class SnapshotDecoder(metaclass=Dispatcher):
             self._next_auto_uid += 1
             return result
 
-    def obj_hook(self, obj):
+    def obj_decode(self, obj):
         if isinstance(obj, str):
             return structures.ObjectTableReference(uid=obj)
         elif isinstance(obj, (list, float, int)):
@@ -107,45 +107,45 @@ class SnapshotDecoder(metaclass=Dispatcher):
         return self.table[ref]
 
     @Dispatcher.dispatch(Tokens.ARRAY_T)
-    def array_hook(self, array, **kwargs):
+    def array_decode(self, array, **kwargs):
         return structures.Array(array[Tokens.DATA], **kwargs)
 
     @Dispatcher.dispatch(Tokens.TREE_NODE_T)
-    def tree_node_hook(self, tree_node, **kwargs):
+    def tree_node_decode(self, tree_node, **kwargs):
         return structures.TreeNode(data=tree_node.get(Tokens.DATA, structures.Null),
                                    children=tree_node.get(Tokens.CHILDREN),
                                    **kwargs)
 
     @Dispatcher.dispatch(Tokens.EDGE_T)
-    def edge_hook(self, edge, **kwargs):
+    def edge_decode(self, edge, **kwargs):
         return structures.Edge(edge[Tokens.FROM], edge[Tokens.TO],
                                data=edge.get(Tokens.DATA, structures.Null),
                                **kwargs)
 
     @Dispatcher.dispatch(Tokens.GRAPH_T)
-    def graph_hook(self, graph, **kwargs):
+    def graph_decode(self, graph, **kwargs):
         return structures.Graph(graph[Tokens.GRAPH_NODES],
                                 graph[Tokens.GRAPH_EDGES], **kwargs)
 
     @Dispatcher.dispatch(Tokens.NODE_T)
-    def node_hook(self, node, **kwargs):
+    def node_decode(self, node, **kwargs):
         return structures.Node(node.get(Tokens.DATA, structures.Null),
                                **kwargs)
 
     @Dispatcher.dispatch(Tokens.NULL_T)
-    def null_hook(self, null, **kwargs):
+    def null_decode(self, null, **kwargs):
         return structures.Null
 
     @Dispatcher.dispatch(Tokens.POINTER_T)
-    def pointer_hook(self, ptr, **kwargs):
+    def pointer_decode(self, ptr, **kwargs):
         return structures.Pointer(ptr[Tokens.DATA], **kwargs)
 
     @Dispatcher.dispatch(Tokens.STRING_T)
-    def string_hook(self, string, **kwargs):
+    def string_decode(self, string, **kwargs):
         return structures.String(string[Tokens.DATA], **kwargs)
 
     @Dispatcher.dispatch(Tokens.WIDGET_T)
-    def widget_hook(self, widget, **kwargs):
+    def widget_decode(self, widget, **kwargs):
         return structures.Widget(**kwargs)
 
     def finalize(self):
@@ -193,7 +193,7 @@ def decode_snapshot(*objects):
     sd = SnapshotDecoder()
     for raw_obj in objects:
         post_order_visit(raw_obj,
-                         visit=sd.obj_hook,
+                         visit=sd.obj_decode,
                          skip=json_keys_to_skip)
     return sd.finalize()
 
