@@ -29,6 +29,12 @@ class ObjectTable(dict):
             if hasattr(obj, 'untablify'):
                 obj.untablify(self)
 
+    def getuid(self, uid):
+        """Convenience method to return the object with the given uid (`str` type)"""
+        if not isinstance(uid, str):
+            raise TypeError("uid must be a string, not {}".format(uid))
+        return self[ObjectTableReference(uid=uid)]
+
 ObjectTableReference = collections.namedtuple("ObjectTableReference", ("uid",))
 
 Snapshot = collections.namedtuple("Snapshot", ("names", "obj_table"))

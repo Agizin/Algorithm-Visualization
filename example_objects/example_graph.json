@@ -1,0 +1,37 @@
+[
+    {"T": "graph", "uid": "mygraph", "var": "G",
+     "nodes": [
+         {"T": "node", "uid": "n0", "data": 0},
+         {"T": "node", "uid": "n1", "data": 1},
+         {"T": "node", "uid": "n2", "data": 2},
+         {"T": "node", "uid": "n3", "data": 3},
+         {"T": "node", "uid": "n4", "data": 4},
+         {"T": "node", "uid": "n5", "data": 5},
+         {"T": "node", "uid": "n6", "data": 6},
+         {"T": "node", "uid": "n7", "data": 7},
+         {"T": "node", "uid": "n8", "data": 8}
+     ],
+     "edges": [
+         {"T": "edge", "uid": "e0", "from": "n0", "to": "n1"},
+         {"T": "edge", "uid": "e1", "from": "n3", "to": "n5"},
+         {"T": "edge", "uid": "e2", "from": "n0", "to": "n2"},
+         {"T": "edge", "uid": "e3", "from": "n2", "to": "n1"},
+         {"T": "edge", "uid": "e4", "from": "n0", "to": "n5"},
+         {"T": "edge", "uid": "e5", "from": "n5", "to": "n7"},
+         {"T": "edge", "uid": "e6", "from": "n6", "to": "n7"},
+         {"T": "edge", "uid": "e7", "from": "n8", "to": "n1"},
+         {"T": "edge", "uid": "e8", "from": "n8", "to": "n7"}
+     ]
+    },
+    {"T": "graph", "uid": "othergraph", "var": "H",
+     "nodes": [
+         "n0", "n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8"
+     ],
+     "edges": [
+         "e0", "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8",
+         {"T": "edge", "uid": "e9", "from": "n4", "to": "n7"},
+         {"T": "edge", "uid": "e10", "from": "n1", "to": "n4"}
+     ]
+    }
+
+]
