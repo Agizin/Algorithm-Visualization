@@ -55,6 +55,8 @@ class Dispatcher(type):
         """Muck about with the class under construction to give it the desired
         `dispatch` function.
         """
+        # Note that `cls` is the class whose metaclass is Dispatcher.
+        # Type.__init__ is weird that way.
         cls._dispatcher = {}
         def _dispatch(self, key):
             if key not in self._dispatcher:
