@@ -191,6 +191,11 @@ def decode_json(text):
         snapshots.append(decode_snapshot(*raw_snapshot))
     return snapshots
 
+def decode_snapshot_text(text):
+    raw_snapshot = parse(text)
+    validate_snapshot(raw_snapshot)
+    return decode_snapshot(*raw_snapshot)
+
 def decode_snapshot(*objects):
     sd = SnapshotDecoder()
     for raw_obj in objects:
@@ -206,6 +211,9 @@ def validate(json_stuff):
     if isinstance(json_stuff, dict):
         if json_stuff.get(Tokens.TYPE) == Tokens.NULL_T:
             validate_null(json_stuff)
+
+def validate_snapshot(snapshot):
+    pass  # TODO
 
 def parse(text):
     return json.loads(text, object_hook=fix_aliases)
