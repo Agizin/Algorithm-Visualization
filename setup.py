@@ -11,4 +11,5 @@ setup(name='algviz',
           "console_scripts": [
               "algviz_graph_mockup=algviz.tools.graph_drawing_mockup:main",
           ]},
+      install_requires=['pygraphviz'],
 )
