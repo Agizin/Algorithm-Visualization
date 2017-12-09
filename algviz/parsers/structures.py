@@ -29,7 +29,9 @@ class ObjectTable(dict):
             if hasattr(obj, 'untablify'):
                 obj.untablify(self)
 
-ObjectTableReference = collections.namedtuple("ObjectTableReference", ("uid",))
+class ObjectTableReference(collections.namedtuple("ObjectTableReference", ("uid",))):
+    def __hash__(self):
+        return hash(self.uid)
 
 Snapshot = collections.namedtuple("Snapshot", ("names", "obj_table"))
 
