@@ -65,6 +65,9 @@ class DataStructure(metaclass=abc.ABCMeta):
                 hasattr(other, "uid") and
                 other.uid == self.uid)
 
+    def __hash__(self):
+        return hash(ObjectTableReference(self.uid))
+
 # make int and float literals appear to be DataStructure subclasses
 DataStructure.register(int)
 DataStructure.register(float)
@@ -122,9 +125,6 @@ class NullType(DataStructure, metaclass=_Singleton):
     def __repr__(self):
         return "Null"
 
-    def __hash__(self):
-        return hash(self.uid)
-
 Null = NullType()
 
 class LinkedListNode(DataStructure):
@@ -153,14 +153,16 @@ class Graph(DataStructure):
                 self.edges == other.edges)
 
 class Node(DataStructure):
+    # This is a minimal node that isn't responsible for its own edges.  This
+    # allows for a more flexible graph implementation (i.e. allowing subgraphs
+    # over the same nodes).  If you want to store edges within your node, use
+    # TreeNode or a subclass instead of this.
     def __init__(self, data, **kwargs):
         super().__init__(**kwargs)
         self.data = data
-        # self.edges = edges  # no storing edges, I guess.  TODO: discuss this with people
 
     def untablify(self, obj_table):
         self.data = obj_table[self.data]
-        # self.edges = list(obj_table[e] for e in self.edges)
 
     def __eq__(self, other):
         return (super().__eq__(other) and
@@ -168,7 +170,7 @@ class Node(DataStructure):
                 other.data == self.data)
 
     def __hash__(self):
-        return hash(self.uid)
+        return super().__hash__()
 
 class Edge(DataStructure):
     def __init__(self, orig, dest, data=Null, **kwargs):
@@ -190,7 +192,7 @@ class Edge(DataStructure):
                 other.data == self.data)
 
     def __hash__(self):
-        return hash((self.orig, self.dest, self.uid))
+        return super().__hash__()
 
 class Widget(DataStructure):
     # Potentially our most useful DataStructure
