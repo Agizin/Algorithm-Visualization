@@ -12,7 +12,7 @@ import argparse
 import sys
 import pygraphviz as pgv
 
-from algviz.parsers import json_objects, structures
+from algviz.parser import json_objects, structures
 
 def graph_to_pgv(graph):
     """Make a `pygraphviz.AGraph` from the given `algviz.structures.Graph`"""
@@ -51,7 +51,6 @@ def main():
     else:
         # ... So we use the use the underlying buffer to write binary data to stdout
         outfile = args.outfile.buffer
-        print(outfile, file=sys.stderr)
     # Now we can do the actual decoding and drawing
     snapshot = json_objects.decode_snapshot_text(args.infile.read())
     if args.var:
