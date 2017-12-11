@@ -1,5 +1,6 @@
-import unittest
+import collections.abc
 import json
+import unittest
 
 from . import json_objects
 from . import structures
@@ -62,7 +63,6 @@ class GenericDecodingTestCase(unittest.TestCase):
         self.actual_snapshot = _list_to_snapshot(self.snapshot_input)
         self.actual_object = self.actual_snapshot.obj_table[
             structures.ObjectTableReference(self.expected_uid)]
-        # self.copy_with_wrong_uid = self._decode_with_wrong_uid()
 
     def set_up_expectations(self):
         #  subclass should override this method
@@ -94,6 +94,13 @@ class GenericDecodingTestCase(unittest.TestCase):
 
     def test_has_proper_uid(self):
         self.assertEqual(self.actual_object.uid, self.expected_uid)
+
+    def test_hash_matches_hash_of_placeholder(self):
+        # To keep life simple, if our objects are hashable, then the hash
+        # should be equal to the hash of the ObjectTableReference placeholder.
+        if isinstance(self.actual_object, collections.abc.Hashable):
+            self.assertEqual(hash(self.actual_object),
+                             hash(structures.ObjectTableReference(self.actual_object.uid)))
 
     def test_equality_depends_on_uid(self):
         different_uid = "a totally different uid"
@@ -229,6 +236,31 @@ class GraphDecodingTestCase(GenericDecodingTestCase):
             edges=[e0, e1, structures.Edge(n2, n2), e3])
         self.same_uid_object = self.unexpected_object
 
+class NodeDecodingTestCase(GenericDecodingTestCase):
+    cls_under_test = structures.Node
+    def set_up_expectations(self):
+        self.snapshot_input = [
+            {"T": "node", "uid": self.expected_uid, "metadata": self.expected_metadata,
+             "data": 1200},
+        ]
+        self.expected_object = self.factory(1200)
+        self.same_uid_object = self.factory(-10)
+        self.unexpected_object = self.factory(100, uid=(self.expected_uid + "not"))
+
+class EdgeDecodingTestCase(GenericDecodingTestCase):
+    cls_under_test = structures.Edge
+    def set_up_expectations(self):
+        self.snapshot_input = [
+            {"T": "edge", "uid": self.expected_uid, "metadata": self.expected_metadata,
+             "data": 1200, "from": "n0", "to": "n1"},
+            {"T": "node", "uid": "n0", "data": 3},
+            {"T": "node", "uid": "n1", "data": 10},
+        ]
+        n0 = structures.Node(3, uid="n0")
+        n1 = structures.Node(10, uid="n1")
+        self.expected_object = self.factory(orig=n0, dest=n1, data=1200)
+        self.same_uid_object = self.factory(orig=n1, dest=n0, data=-10)
+        self.unexpected_object = self.factory(orig=n1, dest=n0, data=1200)
 
 if __name__ == "__main__":
     unittest.main()
