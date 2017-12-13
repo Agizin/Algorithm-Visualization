@@ -9,6 +9,7 @@ TODO: add better values to tree nodes
 
 class Tree():
     def __init__(self, value, children = None, name=None):
+        self.is_binary = False
         self.value = value
         self.children = [] if children is None else children
         self.name = name
@@ -62,13 +63,14 @@ class TreeVisualizer(Visualizer):
                 sub_width = sub_widths[i]
                 x = far_x_bound + sub_width/2
                 far_x_bound = far_x_bound + sub_width
-                self._draw((x,y), subtree.get_children(), value=subtree.value, **kwargs)
-                top = (x, y-radius)
-                edge = self.svg_doc.line(start = parent_center,
+                if subtree is not None:
+                     self._draw((x,y), subtree.get_children(), value=subtree.value, **kwargs)
+                     top = (x, y-radius)
+                     edge = self.svg_doc.line(start = parent_center,
                                          end = top,
                                          stroke_width='3',
                                          stroke='black')
-                self.svg_doc.add(edge)
+                     self.svg_doc.add(edge)
                 
         parent_node = self.svg_doc.circle(center = parent_center,
                                           r = radius,
@@ -91,10 +93,14 @@ class TreeVisualizer(Visualizer):
             else:
                 text_size = '10'
             text_insert_y = parent_center[1] + 10
+
+            text_size = 25
             
             text = self.svg_doc.text(text_str,
-                                     insert = (text_insert_x, text_insert_y),
-                                     font_size=text_size)
+                                     insert = parent_center,
+                                     font_size=text_size,
+                                     text_anchor="middle",
+                                     dominant_baseline="central")
             self.svg_doc.add(text)
 
     def draw(self, root, center, **kwargs):
@@ -103,7 +109,7 @@ class TreeVisualizer(Visualizer):
 
 def main():
 
-    svg_document = svgwrite.Drawing(filename ='tree.svg',
+    svg_document = svgwrite.Drawing(filename ='tree_1.svg',
                                     size = ('600px','800px'))
 
     tree = Tree('A',[Tree('DE',[Tree('GHI')]),Tree('JKL'),Tree('MNOP',[Tree('PQRST'),Tree('STUV')])])
@@ -116,7 +122,7 @@ def main():
 
     tree_vis.save()
 
-    svg_doc2 = svgwrite.Drawing(filename='binary_tree.svg',
+    svg_doc2 = svgwrite.Drawing(filename='tree_2.svg',
                                 size = ('600px', '800px'))
 
 
