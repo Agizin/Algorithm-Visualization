@@ -32,13 +32,13 @@ class VisitorTestCaseMixin:
     def to_hell_and_back(self, instance, **kwargs):
         """Visit the object, print it out, decode it, and return the resulting object"""
         _, snapshots = self.to_hell_and_back_full_result(instance, **kwargs)
-        return snapshots[-1].obj_table.getuid(sef.visitor.uid(instance))
+        return snapshots[-1].obj_table.getuid(self.visitor.uid(instance))
 
     def test_metadata(self):
         """Make sure metadata makes it through the process the way it should"""
         def mk_metadata():
             return {"I": {"AM": ["metadataaaaaaaaaaa", 1]},
-                    8: "the number eight"}
+                    "the number eight": 8, "note": "keys must be strings"}
         self.assertIsNot(mk_metadata(), mk_metadata(),
                          msg="""This test doesn't work.  We want different
                          instances of identical dictionaries, or else the test
@@ -55,10 +55,11 @@ class VisitorTestCaseMixin:
             self.visitor.traverse(inst1, var="inst1")
             self.visitor.traverse(inst2, var="inst2")
         _, [snapshot] = self.read_result()
-        self.assertEqual(snapshot.names["inst1"],
-                         snapshot.obj_table.getuid(self.visitor.uid(inst1)))
-        self.assertEqual(snapshot.names["inst2"],
-                         snapshot.obj_table.getuid(self.visitor.uid(inst2)))
+        for inst, name in [(inst1, "inst1"), (inst2, "inst2")]:
+            self.assertEqual(snapshot.names[name],
+                             snapshot.obj_table.getuid(self.visitor.uid(inst)))
+        # self.assertEqual(snapshot.names["inst2"],
+        #                  snapshot.obj_table.getuid(self.visitor.uid(inst2)))
 
     def sample_instance(self):
         """Should return an object suitable for `self.visitor` to traverse.

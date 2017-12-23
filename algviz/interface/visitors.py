@@ -4,9 +4,19 @@ from algviz.parser.json_objects import Tokens
 
 class Visitor(metaclass=abc.ABCMeta):
 
-    def __init__(self, output_mngr):
+    def __init__(self, output_mngr, data_visitor=None):
+        """Positional parameters:
+        * An `algviz.interface.output.OutputManager` to use for output
+
+        Keyword parameters:
+        * data_visitor -- an instance of visitor to use on any data by default.
+        If this is None, DispatchVisitor will be used.
+        """
         self.output_mngr = output_mngr
         # assert hasattr(self, "type_"), "Visitor subclasses need a 'type_' attribute"
+        self.data_visitor = data_visitor
+        if data_visitor is None:
+            self.data_visitor = DispatchVisitor(self.output_mngr)
 
     def uid(self, obj):
         """Return a unique identifier for this object.
@@ -15,7 +25,7 @@ class Visitor(metaclass=abc.ABCMeta):
         under inspection is altered, i.e. until the objects are mutated,
         overwritten, or recounted.
         """
-        return id(obj)
+        return str(id(obj))
 
     def traverse(self, obj, **kwargs):
         # To traverse most simple objects, we can just visit them.
@@ -62,6 +72,9 @@ class DispatchVisitor(Visitor):
     """
 
     def __init__(self, output_mngr, updates=None, **kwargs):
+        # If data_visitor is unspecified, a new instance of this class is
+        # created.  So we must use `self` instead to prevent a crash.
+        kwargs.setdefault("data_visitor", self)
         super().__init__(output_mngr, **kwargs)
         self.dispatch_dict = _dispatch_visit_dict.copy()
         if updates is not None:
@@ -73,18 +86,18 @@ class DispatchVisitor(Visitor):
         for superclass in type(obj).mro():
             if superclass in self.dispatch_dict:
                 # Get an appropriate visitor
-                visitor = self.dispatch_dict[superclass](self.output_mngr)
+                visitor = self.dispatch_dict[superclass](self.output_mngr, data_visitor=self)
                 # Call the desired method on that visitor
                 return getattr(visitor, methodname)(obj, *args, **kwargs)
 
-    def uid(self, *args, **kwargs):
-        return self._dispatch_method("uid", *args, **kwargs)
+    def uid(self, obj, **kwargs):
+        return self._dispatch_method("uid", obj, **kwargs)
 
-    def traverse(self, *args, **kwargs):
-        return self._dispatch_method("traverse", *args, **kwargs)
+    def traverse(self, obj, *args, **kwargs):
+        return self._dispatch_method("traverse", obj, *args, **kwargs)
 
-    def visit(self, *args, **kwargs):
-        return self._dispatch_method("visit", *args, **kwargs)
+    def visit(self, obj, *args, **kwargs):
+        return self._dispatch_method("visit", obj, *args, **kwargs)
 
 _dispatch_visit_dict = {
     # list: ArrayVisitor,
@@ -177,4 +190,3 @@ class WidgetVisitor(Visitor):
 
     def visit(self, *args, **kwargs):
         return super().visit(*args, **kwargs)
-
