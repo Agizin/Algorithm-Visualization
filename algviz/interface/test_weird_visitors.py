@@ -22,6 +22,7 @@ class BitmapVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
 
     def sample_instance(self):
         # This is a hack to make the number returned always be the same
-        # but the UID of two consecutive instances be different
+        # but the UID of two consecutive instances be different.
+        # (True == 1 but id(True) != id(1))
         self._next_sample_bool ^= True
         return True if self._next_sample_bool else 1
