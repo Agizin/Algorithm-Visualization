@@ -9,6 +9,9 @@ from .test_visitors import VisitorTestCaseMixin
 
 class BitmapVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
     visitor_cls = weird_visitors.BitmapArrayVisitor
+    def setUp(self):
+        super().setUp()
+        self._next_sample_bool = True
 
     def test_bitmap_visit(self):
         with self.output_mngr.start_snapshot():
@@ -18,4 +21,7 @@ class BitmapVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
         self.assertEqual(list(array), [1, 1, 0, 1, 1, 1, 1])
 
     def sample_instance(self):
-        return 500
+        # This is a hack to make the number returned always be the same
+        # but the UID of two consecutive instances be different
+        self._next_sample_bool ^= True
+        return True if self._next_sample_bool else 1
