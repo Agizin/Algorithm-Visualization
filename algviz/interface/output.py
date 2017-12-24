@@ -28,6 +28,11 @@ class _OutputContext:
         if self.parent is not None:
             assert not self.parent.closed, "parent block ended before this one did"
         self.end_child()
+        if self.comma_needed:  # we're closing a non-empty empty dict/list, so put a newline
+            if self.parent is not None:
+                self.parent.do_indent()
+            else:
+                self.write("\n")
         self.write(self.close_char)
         self.closed = True
 
@@ -72,8 +77,9 @@ class _DictOutputContext(_OutputContext):
 
     def key_val(self, key, val):
         if key in self.keys_used:
-            raise OutputStateError("Key {} is a duplicate in this mapping"
+            raise OutputStateError("Key {!r} is a duplicate in this mapping"
                                    .format(key))
+        self.keys_used.add(key)
         self.comma_newline()
         self.write_literal(key)
         self.write(": ")
