@@ -103,7 +103,7 @@ _dispatch_visit_dict = {
     # list: ArrayVisitor,
     # int: NumberVisitor,
 }
-def _default_for_type(*types):
+def default_for_type(*types):
     """Decorated class will become the default visitor for the given type(s).
     See DispatchVisitor.
 
@@ -118,7 +118,7 @@ def _default_for_type(*types):
         return cls
     return _decorator
 
-@_default_for_type(list)
+@default_for_type(list)
 class ArrayVisitor(Visitor):
     """Visit an array, letting `self.data_visitor` traverse each item in the array.
 
@@ -151,7 +151,7 @@ class ArrayVisitor(Visitor):
 
 # class TreeVisitor
 
-@_default_for_type(int, float)
+@default_for_type(int, float)
 class NumberVisitor(Visitor):
 
     def traverse(self, i, **kwargs):
@@ -164,7 +164,7 @@ class NumberVisitor(Visitor):
         raise NotImplementedError("Something has gone wrong if we're visiting an int (since visiting it implies making a JSON dictionary for it)")
 
 
-@_default_for_type(str)
+@default_for_type(str)
 class StringVisitor(Visitor):
 
     type_ = Tokens.STRING_T
@@ -183,7 +183,7 @@ class StringVisitor(Visitor):
         self.output_mngr.next_key(Tokens.DATA)
         self.output_mngr.next_val(self.to_str(str_))
 
-@_default_for_type(object)
+@default_for_type(object)
 class WidgetVisitor(Visitor):
     """A Widget is a "don't care" object, quite like a `void*`"""
     type_ = Tokens.WIDGET_T

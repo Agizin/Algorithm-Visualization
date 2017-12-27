@@ -1,24 +1,23 @@
 import unittest
-import tempfile
 
 from algviz.parser import json_objects, structures
 from . import output
 from . import visitors
+from .testutil import TempFileMixin
 
-class VisitorTestCaseMixin:
+class VisitorTestCaseMixin(TempFileMixin):
 
     def setUp(self):
-        self.tempfile = tempfile.TemporaryFile("r+")
+        self.setup_tempfile()
         self.output_mngr = output.OutputManager(outfile=self.tempfile)
         self.visitor = self.visitor_cls(self.output_mngr)
 
     def tearDown(self):
-        self.tempfile.close()
+        self.teardown_tempfile()
 
     def read_result(self):
         self.output_mngr.end()
-        self.tempfile.seek(0)
-        text = self.tempfile.read()
+        text = self.read_tempfile()
         return text, json_objects.decode_json(text)
 
     def to_hell_and_back_full_result(self, instance, **kwargs):
@@ -58,8 +57,6 @@ class VisitorTestCaseMixin:
         for inst, name in [(inst1, "inst1"), (inst2, "inst2")]:
             self.assertEqual(snapshot.names[name],
                              snapshot.obj_table.getuid(self.visitor.uid(inst)))
-        # self.assertEqual(snapshot.names["inst2"],
-        #                  snapshot.obj_table.getuid(self.visitor.uid(inst2)))
 
     def sample_instance(self):
         """Should return an object suitable for `self.visitor` to traverse.
