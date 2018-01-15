@@ -1,6 +1,8 @@
 import collections
 import abc
 
+from algviz.picture import internal_picture, leaf_picture 
+
 class ObjectTable(dict):
     """A table of references to objects.  Used to retrieve an object given its UID.
 
@@ -40,6 +42,9 @@ ObjectTableReference = collections.namedtuple("ObjectTableReference", ("uid",))
 Snapshot = collections.namedtuple("Snapshot", ("names", "obj_table"))
 
 class DataStructure(metaclass=abc.ABCMeta):
+    picture_type = None #static variable that indicates the appropriate picture class for each structure
+    #is there a better way to implement mapping structure types to picture types?
+
     def __init__(self, uid=None, metadata=None):
         self.uid = uid
         if metadata is not None:
@@ -213,10 +218,34 @@ class TreeNode(DataStructure):
     """A node with some number of children in a fixed order.  Edges are implicit."""
     # A common superclass could be used for linked-list nodes, since linked
     # lists are just skinny trees
+
+    picture_type = internal_picture.TreePicture
+
     def __init__(self, data, children=None, **kwargs):
         super().__init__(**kwargs)
         self.data = data
         self.children = [] if children is None else children
+
+    def is_leaf(self):
+        return len(self.children) == 0
+        
+    def tree_width(self):
+        if self.is_leaf():
+            return 1
+        width = max(len(self.children),1)
+        for child in self.children:
+            child_width = child.tree_width()
+            width = max(width, child_width)
+        return width
+
+    def tree_height(self):
+        if self.is_leaf():
+            return 1
+        height = 0
+        for child in self.children:
+            child_height = child.tree_height
+            height = max(height,child_height)
+        return height + 1
 
     def untablify(self, obj_table):
         self.data = obj_table[self.data]
@@ -229,6 +258,8 @@ class TreeNode(DataStructure):
                 self.children == other.children)
 
 class String(collections.UserString, DataStructure):
+    picture_type = leaf_picture.StringLeaf
+
     def __init__(self, *args, **kwargs):
         collections.UserString.__init__(self, *args)
         DataStructure.__init__(self, **kwargs)
