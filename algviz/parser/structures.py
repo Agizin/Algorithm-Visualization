@@ -243,7 +243,7 @@ class TreeNode(DataStructure):
             return 1
         height = 0
         for child in self.children:
-            child_height = child.tree_height
+            child_height = child.tree_height()
             height = max(height,child_height)
         return height + 1
 
@@ -256,6 +256,9 @@ class TreeNode(DataStructure):
                 isinstance(other, TreeNode) and
                 self.data == other.data and
                 self.children == other.children)
+
+    def __hash__(self):
+        return super().__hash__()
 
 class String(collections.UserString, DataStructure):
     picture_type = leaf_picture.StringLeaf
