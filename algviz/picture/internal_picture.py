@@ -133,11 +133,12 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
             return 2*self.node_radius+2*self.node_sep
         width = 0
         for child in root.children:
-            child_width = child.pixel_width()
+            child_width = self._pixel_width(child)
             width += child_width
         return width
 
     def _pixel_height(self, root):
+        #TODO: improve height heuristic for tall trees.
         tree_height = root.tree_height()
         return tree_height*(2*self.node_radius + self.edge_length) - self.edge_length + self.node_sep
 
@@ -158,8 +159,9 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
             subtree = level_roots[i]
             sub_width = sub_widths[i]
             x = far_x_bound + sub_width/2
-            if sub_tree is not None:
-                new_node = TreeNode((x,y), subtree.data, radius=self.node_radius, **self.properties)
+            far_x_bound += sub_width
+            if subtree is not None:
+                new_node = TreePicture.TreeNode((x,y), subtree.data, radius=self.node_radius, **self.properties)
                 parent.add_child(new_node)
                 if not subtree.is_leaf():
                     self._build_nodes(new_node, subtree.children)
@@ -185,7 +187,7 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
             for child_node in parent.children:
                 edge = svg_engine.draw_line(parent.center, child_node.center, **self.properties)
                 #TODO: create an edge class
-                self._draw_nodes(child_node)
+                self._draw_nodes(child_node, svg_engine)
             parent.draw(svg_engine)
 
     def _draw_data(self):
@@ -195,8 +197,6 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
         while len(node_queue) > 0:
             node = node_queue.pop(0)
             node_data = node.data #subpicture
-            print(node_data)
-            print(type(node_data))
             node_data.draw()
             if (isinstance(node_data, StringLeaf) and node_data.size[0] < node.radius
                 and node_data.size[1] < node.radius):
