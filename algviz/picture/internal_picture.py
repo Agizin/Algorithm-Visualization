@@ -6,10 +6,6 @@ from .picture import Picture
 from .leaf_picture import StringLeaf
 from .svg_engine import SVGEngine
 
-# structure_map = {structures.String : StringLeaf, structures.TreeNode : internal_picture.TreePicture} #better way to implement?
-# def make_picture(structure, *args, **kwargs):
-#     return structure_map[type(structure)](structure, *args, **kwargs)
-
 
 class InternalPicture(Picture, metaclass = abc.ABCMeta):
     class Node(metaclass = abc.ABCMeta):
@@ -74,8 +70,8 @@ class InternalPicture(Picture, metaclass = abc.ABCMeta):
             subpic_root = subpic_svg.getroot()
             if cxn_position is None:
                 #no connection point, image centered at main point
-                shift_x = main_point[0] - subpicture.size[0]/2
-                shift_y = main_point[1] - subpicture.size[1]/2
+                shift_x = left_width + main_point[0]
+                shift_y = main_point[1]
             elif cxn_position == "Left":
                 shift_x = left_width + self.size[0]
                 shift_y = left_cur_shift_y
@@ -85,15 +81,16 @@ class InternalPicture(Picture, metaclass = abc.ABCMeta):
                 shift_y = right_cur_shift_y
                 right_cur_shift_y += subpicture.size[1]
             subpic_root.moveto(shift_x, shift_y, scale=0.95)
-            #if cxn_point is not None:
-            #    cxn_point = (cxn_point[0]+shift_x, cxn_point[1]+shift_y)
-            #    svg_engine.draw_arrow(main_point, cxn_point)
+            if cxn_point is not None:
+                cxn_point = (cxn_point[0]+shift_x, cxn_point[1]+shift_y)
+                svg_engine.draw_arrow(main_point, cxn_point)
             subpics.append(subpic_root)
             if subpicture.filename[:4].lower() == "temp":
                 os.remove(subpicture.filename)
         #svg_engine.save()
         new_svg.append(subpics)
         new_svg.save(self.filename)
+        self.size = (new_size_x, new_size_y)
             
             
 class TreePicture(InternalPicture): #should be in its own file but not for now b/c convenient
@@ -121,11 +118,15 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
     
     def __init__(self, tree_root, filename=None, size=None, **kwargs):
         self.root = tree_root
-        self.root_node = None
         self.node_radius = kwargs.pop("node_radius", 50)
         self.edge_length = kwargs.pop("edge_length", 200)
         self.node_sep = kwargs.pop("node_sep", 10)
         self.properties = kwargs
+        
+        if filename is None:	
+            filename = self._tempname()
+        if size is None:
+            size = (self._pixel_width(self.root), self._pixel_height(self.root))
         InternalPicture.__init__(self, tree_root, filename, size)
 
     def _pixel_width(self, root):
@@ -142,7 +143,7 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
         tree_height = root.tree_height()
         return tree_height*(2*self.node_radius + self.edge_length) - self.edge_length + self.node_sep
 
-    def _build_nodes(self, parent, level_roots):
+    def _draw_nodes(self, parent, level_roots, svg_engine):
         sub_widths = []
         for subtree in level_roots:
             sub_width = self.width_dict.get(subtree, self._pixel_width(subtree))
@@ -163,51 +164,32 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
             if subtree is not None:
                 new_node = TreePicture.TreeNode((x,y), subtree.data, radius=self.node_radius, **self.properties)
                 parent.add_child(new_node)
+                svg_engine.draw_line(parent.center, new_node.center)
                 if not subtree.is_leaf():
-                    self._build_nodes(new_node, subtree.children)
+                    self._draw_nodes(new_node, subtree.children, svg_engine)
+                else:
+                    new_node.draw(svg_engine)
+        parent.draw(svg_engine)
 
-    def lay_out(self):
-        if self.filename is None:
-            self.filename = self._tempname()
-        if self.size is None:
-            self.size = (self._pixel_width(self.root), self._pixel_height(self.root))
-        self.width_dict = {}
-        root_x = self.size[0]/2
-        root_y = self.node_radius + self.node_sep/2
-        root_center = (root_x, root_y)
-        root_node = TreePicture.TreeNode(root_center, self.root.data,
-                                        radius=self.node_radius,**self.properties)
-        self._build_nodes(root_node, self.root.children)
-        self.root_node = root_node
-
-    def _draw_nodes(self, parent, svg_engine):
-        if parent.is_leaf():
-            parent.draw(svg_engine)
-        else:
-            for child_node in parent.children:
-                edge = svg_engine.draw_line(parent.center, child_node.center, **self.properties)
-                #TODO: create an edge class
-                self._draw_nodes(child_node, svg_engine)
-            parent.draw(svg_engine)
-
-    def _draw_data(self):
+    def _draw_data(self, root_node):
         """Draws/Connects Tree subpictures to the current picture"""
-        node_queue = [self.root_node]
+        node_queue = [root_node]
         connection_dict = {} #connection point on tree mapped to 2-tuple of subpicture and connection position, i.e. left, right, etc
         while len(node_queue) > 0:
             node = node_queue.pop(0)
             node_data = node.data #subpicture
             node_data.draw()
-            if (isinstance(node_data, StringLeaf) and node_data.size[0] < node.radius
+            print(node_data.size)
+            if (isinstance(node_data, StringLeaf) and node_data.size[0] < 2*node.radius
                 and node_data.size[1] < node.radius):
                 #Strings of small size are placed within the node
                 node_data.draw()
-                upper_left_x = node.center[0] - node_data.size[0]/2
+                upper_left_x = node.center[0] - node_data.size[0]/3 #TODO: find better heuristic for centering?
                 upper_left_y = node.center[1] - node_data.size[1]/2
-                connection_dict[(upper_left_x,upper_left_y)] = (node_data, None)
+                connection_dict[(upper_left_x, upper_left_y)] = (node_data, None)
             else:
                 node_center_x = node.center[0]
-                picure_center_x = node_data.size[0]/2
+                picture_center_x = node_data.size[0]/2
                 if node_center_x <= picture_center_x: #Node is on left side of picture
                     position = "Right" #Right side of data will be connected to left of picture
                 else:
@@ -219,9 +201,15 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
                   
 
     def draw(self):
-        if self.root_node is None:
-            self.lay_out()
+
+        #size is determined and node centers are determined without drawing
+        self.width_dict = {}
+        root_x = self.size[0]/2
+        root_y = self.node_radius + self.node_sep/2
+        root_center = (root_x, root_y)
+        root_node = TreePicture.TreeNode(root_center, self.root.data,
+                                        radius=self.node_radius,**self.properties)
         svg_engine = SVGEngine(self.filename, self.size)
-        self._draw_nodes(self.root_node, svg_engine)
+        self._draw_nodes(root_node, self.root.children, svg_engine)
         svg_engine.save()
-        self._draw_data()
+        self._draw_data(root_node)

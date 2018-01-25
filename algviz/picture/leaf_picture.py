@@ -24,9 +24,14 @@ class StringLeaf(LeafPicture):
             self.filename = self._tempname()
         if self.size is None:
             self.size = (self.font_size*(len(self.text)), self.font_size+2) #text width is heuristically determined, will be inexact
+        #TODO: scale font size down if given picture size
 
     def draw(self, position = None):
         self.lay_out()
         svg = SVGEngine(self.filename, self.size)
         svg.draw_text_default(self.text, (0,self.font_size), **self.properties)
         svg.save()
+
+    def text_length(self):
+        return len(self.text)
+
