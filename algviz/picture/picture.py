@@ -34,11 +34,6 @@ class Picture(metaclass=abc.ABCMeta):
             raise DataStructureException("Expected Data Structure, got {}"
                                          .format(type(self.structure)))
         return "temp_{}_{}.svg".format(uid, time_str)
-                    
-    @abc.abstractmethod
-    def lay_out(self):
-        """determines coordinates for picture elements so that it can be drawn"""
-        pass
 
     @abc.abstractmethod
     def draw(self):
@@ -54,7 +49,7 @@ class Picture(metaclass=abc.ABCMeta):
         if position == "Left":
             connection_point = (0, self.size[1]/2)
         elif position == "Right":
-            connection_point = (size[0], self.size[1]/2)
+            connection_point = (self.size[0], self.size[1]/2)
         #TODO: add top, bottom, positions. Anything else?
         elif position is None:
             connection_point = None
