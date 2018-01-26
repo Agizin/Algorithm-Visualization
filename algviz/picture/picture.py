@@ -1,5 +1,7 @@
 import abc
+import os.path
 from time import time
+import svgutils.transform as svgutils
 
 class Picture(metaclass=abc.ABCMeta):
 
@@ -56,6 +58,19 @@ class Picture(metaclass=abc.ABCMeta):
         else:
             raise ValueError("Unknown position: {}".format(position))
 
-    
-
-    
+    def scale(self, new_size):
+        if not os.path.isfile(self.filename):
+            raise IOError("Picture {} must be drawn before it can be scaled".format(self.filename))
+        old_svg = svgutils.fromfile(self.filename)
+        old_pic = old_svg.getroot()
+        if abs(new_size[0]-self.size[0]) <= abs(new_size[1]-self.size[1]):
+            scale_factor = new_size[0]/float(self.size[0])
+        else:
+            scale_factor = new_size[1]/float(self.size[1])
+        print(type(scale_factor))
+        old_pic.scale_xy(x=scale_factor, y=scale_factor)
+        new_svg = svgutils.SVGFigure(new_size)
+        new_svg.append([old_pic])
+        new_svg.save(self.filename)
+        
+        
