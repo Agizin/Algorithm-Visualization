@@ -5,6 +5,7 @@
 ### editor leavings ###
 *~
 \#*
+.vscode
 
 
 ### Python ###
@@ -119,3 +120,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Created SVG files
+*.svg
