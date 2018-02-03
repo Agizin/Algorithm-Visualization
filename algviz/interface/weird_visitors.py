@@ -2,7 +2,7 @@ from . import visitors
 import math
 
 class BitmapArrayVisitor(visitors.ArrayVisitor):
-    """Interpret an `int` as an array of 0s and ones"""
+    """Interpret an `int` as an array of 0s and 1s"""
 
     def __init__(self, output_mngr, *args, data_visitor=None, **kwargs):
         if data_visitor is None:
