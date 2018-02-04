@@ -1,0 +1,11 @@
+[
+    [
+        {"T": "array",
+         "data": [{"T": "string", "data": "fuuu", "var": "fuu"},
+                  {"T": "string", "data": "more fuu"},
+                  {"T": "string", "data": "asdf"}
+                 ],
+         "var": "banana"
+        }
+    ]
+]
