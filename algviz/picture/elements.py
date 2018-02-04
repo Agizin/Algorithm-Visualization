@@ -43,6 +43,19 @@ def top_left_corner(rectangle, coord, anchor):
                  fix_one_dimension(y, y_anch, rectangle.height))
 
 
+def from_top_left_corner(rect, tlc, anchor):
+    class Namespace:
+        pass
+    new_rect = Namespace()
+    new_rect.width = - rect.width
+    new_rect.height = - rect.height
+    return top_left_corner(new_rect, tlc, anchor)
+
+def anchor_translate(rect, coord, from_anch, to_anch):
+    return from_top_left_corner(rect,
+                                top_left_corner(rect, coord, from_anch),
+                                to_anch)
+
 class PictureElement(object):
     # These are all things that will be laid out inside pictures so that they can be drawn.
     pass
@@ -72,6 +85,7 @@ class PointerSource(RectangularElement):
 class StringElement(RectangularElement):
     """A string, geez"""
     def __init__(self, text, engine=None, **kwargs):
+        self.text = text
         width, height = engine.string_size(text)
         super().__init__(width, height, engine=engine, **kwargs)
 
