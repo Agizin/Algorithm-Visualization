@@ -15,5 +15,12 @@ class AnchorTestCase(unittest.TestCase):
                          (-10, -6))
                          
             
+    def test_center_anchor(self):
+        self.assertEqual(tuple(elements.top_left_corner(
+            self.TestRectangle(width=300, height=7),
+            (5, 10),
+            elements.Anchor.center)),
+                         (-145, 6.5))
+
 if __name__ == "__main__":
     unittest.main()
