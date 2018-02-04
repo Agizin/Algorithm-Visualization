@@ -132,8 +132,6 @@ class SimpleTreePicture(AbstractPicture):
                           self.root_picture.height)
         else:
             child_pictures = [SimpleTreePicture(child, **kwargs) for child in root.children]
-            # for child in child_pictures:
-            #     child.scale(1)  # hehe
             horiz_margin = self.engine.margin  # horizontal space between children
             children_width = (sum(child.width for child in child_pictures)
                               + horiz_margin * (len(child_pictures) - 1))
