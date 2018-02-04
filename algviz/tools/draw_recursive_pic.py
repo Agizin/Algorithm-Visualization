@@ -63,7 +63,6 @@ class AwfulSVGPlotter:
         # Maybe the endpoints for the arrow aren't present yet
         src, dest = arrow.origin, arrow.destination
         if src in self.things_drawn and dest in self.things_drawn:
-            print("Hello, world")
             self.draw_arrow(arrow)
         else:
             self.pending_arrows[src].add(arrow)
