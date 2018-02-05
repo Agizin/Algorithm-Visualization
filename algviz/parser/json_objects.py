@@ -1,5 +1,7 @@
 import json
 from . import structures
+import logging
+logger = logging.getLogger(__name__)
 
 class Tokens:
     """Tokens we expect to see in the JSON"""
@@ -203,6 +205,18 @@ def decode_snapshot(*objects):
                          visit=sd.obj_decode,
                          skip=json_keys_to_skip)
     return sd.finalize()
+
+def reads(text):
+    """This smoothly handles the case where we never printed the closing "]",
+    since that's hard to do."""
+    try:
+        return decode_json(text)
+    except json.JSONDecodeError:
+        logger.info("decoding again with extra ']' added on the end")
+        return decode_json(text + "]")
+
+def read(file_obj):
+    return reads(file_obj.read())
 
 def validate(json_stuff):
     # We will want to check stuff here, but obviously we don't yet.

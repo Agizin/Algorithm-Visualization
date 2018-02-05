@@ -1,0 +1,26 @@
+Line 1
+Line 2
+begin {dafs
+this should all be outside
+@algiz begin fred astaire
+still outside
+@algviz command arg1:2 arg2:barney
+@algviz begin nesting arga:dasf
+random stuff
+@algviz internal test case
+@algviz begin two-level nesting
+@algviz end this will be ignored
+iä iä cthulu fhtagn
+böc
+random stuff
+this is really just a test of the parser
+we are still inside first nest
+@algviz end ignore this
+ @algviz end the space means this will not cause any issues
+
+blank lines are OK
+if i try to pop too many times i leave the parser
+@algviz command this is silly
+@algviz end the rest will be ignored
+
+azqwsxdefrgthyjuik,ol.p;
