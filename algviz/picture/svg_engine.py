@@ -77,8 +77,14 @@ class SVGEngine():
         self.svg_doc.add(text)
 
     def draw_arrow(self, start, end, **kwargs):
-        #Temporary implementation only draws a line, TODO: draw arrows
+        """ See http://vanseodesign.com/web-design/svg-markers/ for more info on drawing arrowheads"""
+        
         kwargs = self._add_defaults(**kwargs)
-        self.draw_line(start,end,**kwargs)
+        arrow_marker = self.svg_doc.marker(id="arrow", insert=(1,3), size=(9,6),
+                                           orient="auto", markerUnits="strokeWidth", viewBox="0 0 10 10")
+        arrow_marker.add(self.svg_doc.path(d="M0,0 L0,6 L9,3 z", fill=kwargs["stroke"]))
+        self.svg_doc.add(arrow_marker)
+        arrow = self.svg_doc.line(start, end, marker_end=arrow_marker.get_funciri(), **kwargs)
+        self.svg_doc.add(arrow)
 
-#TODO: arrows, regular polygons, text along a line
+#TODO: pointer start dots, regular polygons, text along a line
