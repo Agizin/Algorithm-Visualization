@@ -61,10 +61,11 @@ class InternalPicture(Picture, metaclass = abc.ABCMeta):
         #svg_engine = SVGEngine(self.filename, self.size)
         left_cur_shift_y = 0
         right_cur_shift_y = 0
+        arrows_file = "temp_arrows.svg"
+        arrows_svg_engine  = SVGEngine(arrows_file, (new_size_x, new_size_y))
         for main_point, connection in connection_dict.items():
             subpicture = connection[0]
             cxn_position = connection[1]
-            cxn_point = subpicture.get_connection_point(cxn_position)
             #TODO: move svgutils interactions to SVGEngine?
             subpic_svg = svgutils.fromfile(subpicture.filename)
             subpic_root = subpic_svg.getroot()
@@ -81,14 +82,20 @@ class InternalPicture(Picture, metaclass = abc.ABCMeta):
                 shift_y = right_cur_shift_y
                 right_cur_shift_y += subpicture.size[1]
             subpic_root.moveto(shift_x, shift_y, scale=0.95)
-            if cxn_point is not None:
-                cxn_point = (cxn_point[0]+shift_x, cxn_point[1]+shift_y)
-                svg_engine.draw_arrow(main_point, cxn_point)
+            if cxn_position is not None:
+                cxn_point = subpicture.get_connection_point(cxn_position)
+                cxn_point_shift = (cxn_point[0]+shift_x, cxn_point[1]+shift_y)
+                main_point_shift = (main_point[0]+left_width, main_point[1])
+                arrows_svg_engine.draw_arrow(main_point_shift, cxn_point_shift)
             subpics.append(subpic_root)
             if subpicture.filename[:4].lower() == "temp":
                 os.remove(subpicture.filename)
-        #svg_engine.save()
+        arrows_svg_engine.save()
         new_svg.append(subpics)
+        arrows_svg = svgutils.fromfile(arrows_file)
+        arrows_root = arrows_svg.getroot()
+        new_svg.append(arrows_root)
+        os.remove(arrows_file)
         new_svg.save(self.filename)
         self.size = (new_size_x, new_size_y)
             
@@ -122,16 +129,15 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
         self.edge_length = kwargs.pop("edge_length", 200)
         self.node_sep = kwargs.pop("node_sep", 10)
         self.properties = kwargs
-        
-        if filename is None:	
-            filename = self._tempname()
+    
         if size is None:
             size = (self._pixel_width(self.root), self._pixel_height(self.root))
+            
         InternalPicture.__init__(self, tree_root, filename, size)
 
     def _pixel_width(self, root):
         if root.is_leaf():
-            return 2*self.node_radius+2*self.node_sep
+            return 2*self.node_radius+self.node_sep
         width = 0
         for child in root.children:
             child_width = self._pixel_width(child)
@@ -179,7 +185,6 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
             node = node_queue.pop(0)
             node_data = node.data #subpicture
             node_data.draw()
-            print(node_data.size)
             if (isinstance(node_data, StringLeaf) and node_data.size[0] < 2*node.radius
                 and node_data.size[1] < node.radius):
                 #Strings of small size are placed within the node

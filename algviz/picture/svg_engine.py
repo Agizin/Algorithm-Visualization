@@ -80,5 +80,5 @@ class SVGEngine():
         #Temporary implementation only draws a line, TODO: draw arrows
         kwargs = self._add_defaults(**kwargs)
         self.draw_line(start,end,**kwargs)
-        
-    #TODO: arrows, regular polygons, text along a line
+
+#TODO: arrows, regular polygons, text along a line

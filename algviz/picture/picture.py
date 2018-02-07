@@ -3,11 +3,11 @@ import os.path
 from time import time
 import svgutils.transform as svgutils
 
-class Picture(metaclass=abc.ABCMeta):
+class DataStructureException(TypeError):
+    """indicates that an instance of structures.DataStructure was expected"""
+    pass
 
-    class DataStructureException(TypeError):
-        """indicates that an instance of structures.DataStructure was expected"""
-        pass
+class Picture(metaclass=abc.ABCMeta):
 
     @staticmethod
     def make_picture(structure, *args, **kwargs):
@@ -22,19 +22,20 @@ class Picture(metaclass=abc.ABCMeta):
             raise NotImplementedError("Data Structure '{}' is not yet supported"
                                       .format(type(structure)))
     
-    def __init__(self, structure, filename, size=None, **kwargs):
+    def __init__(self, structure, filename=None, size=None, **kwargs):
         self.structure = structure #data structure that this picture represents
-        self.filename = filename #name of svg file
         self.size = size #a requirement on max bounding box size, if None then no requirement
-        #TODO: scale down pictures after drawing so that they fit the bounding box.
+        
+        if filename is None: #name of svg file
+            filename = self._tempname()
+        self.filename = filename
         
     def _tempname(self):
         time_str = str(time()).replace('.','')
         try:
             uid = self.structure.uid
         except AttributeError:
-            raise DataStructureException("Expected Data Structure, got {}"
-                                         .format(type(self.structure)))
+            raise DataStructureException("Expected Data Structure, got {}".format(type(self.structure)))
         return "temp_{}_{}.svg".format(uid, time_str)
 
     @abc.abstractmethod
@@ -46,8 +47,6 @@ class Picture(metaclass=abc.ABCMeta):
         relative to the current picture. Position is where the connection point
         will be relative to this picture, e.g. Left, Right."""
         
-        if self.size is None:
-            self.lay_out()
         if position == "Left":
             connection_point = (0, self.size[1]/2)
         elif position == "Right":
@@ -57,6 +56,7 @@ class Picture(metaclass=abc.ABCMeta):
             connection_point = None
         else:
             raise ValueError("Unknown position: {}".format(position))
+        return connection_point
 
     def scale(self, new_size):
         if not os.path.isfile(self.filename):
@@ -67,10 +67,10 @@ class Picture(metaclass=abc.ABCMeta):
             scale_factor = new_size[0]/float(self.size[0])
         else:
             scale_factor = new_size[1]/float(self.size[1])
-        print(type(scale_factor))
         old_pic.scale_xy(x=scale_factor, y=scale_factor)
         new_svg = svgutils.SVGFigure(new_size)
         new_svg.append([old_pic])
         new_svg.save(self.filename)
+        self.size= new_size
         
         
