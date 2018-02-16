@@ -49,7 +49,7 @@ class AwfulSVGPlotter:
             return sum((x - y) ** 2 for x, y in zip(pt1, pt2))
         def iter_connections(rect):
             top_left = self.things_drawn[rect]
-            for anch in elements.Anchor:
+            for anch in elements.Anchor.top, elements.Anchor.bottom:  #in elements.Anchor:
                 yield elements.from_top_left_corner(rect, top_left, anch)
         src_pt, dest_pt = min(((s, d)
                                for s in iter_connections(src)
@@ -76,7 +76,7 @@ class AwfulSVGPlotter:
                                        dy=[self.font_px]))
         elif isinstance(thing, elements.NodeElement):
             self.doc.add(self.doc.rect(insert=coord, size=(thing.width, thing.height),
-                                       fill_opacity="0.5"))
+                                       fill_opacity="0.20"))
         elif isinstance(thing, elements.Arrow):
             self.draw_arrow_soon(thing)
         elif isinstance(thing, elements.PointerSource):
@@ -105,7 +105,7 @@ def main():
     if args.var:
         obj = snapshot.names[args.var]
     else:
-        obj = snapshot.obj_table[args.uid]
+        obj = snapshot.obj_table.getuid(args.uid)
     pic_cls = choose_pic(obj)
     engine = AwfulSVGPlotter(font_px=15, )
     pic = pic_cls(obj, engine=engine, make_child=choose_pic)
@@ -113,7 +113,7 @@ def main():
         for elem in pic.elements():
             if isinstance(elem, tuple):
                 coord, elem = elem
-                coord = tuple(c + 200 for c in coord)
+                # coord = tuple(c + 200 for c in coord)
             else:
                 coord = None
             engine.draw_thing(elem, coord=coord)
