@@ -152,7 +152,10 @@ class SimpleTreePicture(AbstractPicture):
 class StupidArrayPicture(AbstractPicture):
     def __init__(self, array, **kwargs):
         super().__init__(**kwargs)
-        self.data_pic = self.make_child(array[0])
+        if array:
+            self.data_pic = self.make_child(array[0])
+        else:
+            self.data_pic = self.make_child("")  # shitty hack
         width = self.data_pic.width
         height = self.data_pic.height
         if len(array) > 1:
