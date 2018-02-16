@@ -183,6 +183,19 @@ class StringVisitor(Visitor):
         self.output_mngr.next_key(Tokens.DATA)
         self.output_mngr.next_val(self.to_str(str_))
 
+
+class TreeVisitor(Visitor):
+    type_ = Tokens.STRING_T
+    def to_str(self, obj):
+        """Override this if you have some non-tree object that you want to
+        display as a tree.
+        """
+        return str(obj)
+    def visit(self, str_, *args, **kwargs):
+        super().visit(str_, *args, **kwargs)
+        self.output_mngr.next_key(Tokens.DATA)
+        self.output_mngr.next_val(self.to_str(str_))
+
 @default_for_type(object)
 class WidgetVisitor(Visitor):
     """A Widget is a "don't care" object, quite like a `void*`"""
