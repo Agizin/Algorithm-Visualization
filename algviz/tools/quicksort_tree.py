@@ -20,7 +20,7 @@ def quicksort(items, uid_str, do_a_thing):
     left = quicksort([x for x in items if x < pivot], uid_str + "L", do_a_thing)
     right = quicksort([x for x in items if x > pivot], uid_str + "R", do_a_thing)
     middle = [x for x in items if x == pivot]
-    do_a_thing(uid_str + "M", middle)
+    # do_a_thing(uid_str + "M", middle)
     return left + middle + right
 
 def mk_qs_node_visitor(output_manager):
@@ -33,7 +33,8 @@ def mk_qs_node_visitor(output_manager):
 
         if len(items) > 1 and not middle:
             # This node will have children
-            result["children"] = [uid_str + "L", uid_str + "M", uid_str + "R"]
+            result["children"] = [uid_str + "L", # uid_str + "M", 
+                                  uid_str + "R"]
         # `next_val` can print anything that `json.dumps()` accepts:
         output_manager.next_val(result)
     return visit_qs_node
