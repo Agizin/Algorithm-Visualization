@@ -93,3 +93,42 @@ class ArrayVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
         arr = self.to_hell_and_back([1, 2, 3])
         self.assertIsInstance(arr, structures.Array)
         self.assertEqual(list(arr), [1, 2, 3])
+
+class LinkedListVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
+    visitor_cls = visitors.LinkedListVisitor
+
+    def sample_instance(self):
+        return [[1,2,3], 0]
+
+    def test_ll_export_and_import(self):#test to see if the ll visitor on sample_instance
+        ll = self.to_hell_and_back(self.sample_instance())#returns [1,2,3]
+        self.assertIsInstance(ll, structures.Array)
+        self.assertEqual(list(ll), self.sample_instance()[0])
+
+    def test_ll_partial_visit(self):#test to see if we only visit some of the list
+        sample = self.sample_instance()#if the position isn't the start
+        sample[1] = 1
+        ll = self.to_hell_and_back(sample)
+        self.assertIsInstance(ll, structures.Array)
+        self.assertEqual(list(ll), [2,3])
+
+    def test_ll_empty(self):
+        sample = self.sample_instance()
+        sample[0] = []
+        ll = self.to_hell_and_back(sample)
+        self.assertIsInstance(ll, structures.Array)
+        self.assertEqual(list(ll), [])
+
+    def test_ll_out_of_bounds(self):
+        sample = self.sample_instance()
+        sample[1] = 3
+        ll = self.to_hell_and_back(sample)
+        self.assertIsInstance(ll, structures.Array)
+        self.assertEqual(list(ll), [])
+
+    def test_ll_negative_index(self):
+        sample = self.sample_instance()
+        sample[1] = -1
+        ll = self.to_hell_and_back(sample)
+        self.assertIsInstance(ll, structures.Array)
+        self.assertEqual(list(ll), [])

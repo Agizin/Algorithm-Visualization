@@ -190,3 +190,29 @@ class WidgetVisitor(Visitor):
 
     def visit(self, *args, **kwargs):
         return super().visit(*args, **kwargs)
+
+class LinkedListVisitor(Visitor):
+    """Linked lists are represented as an array of an array and a current index, i.e.,
+    [[1, 2, 3], 0]."""
+    type_ = Tokens.ARRAY_T#treat this as an array, at least for now.
+
+    def has_current(self, ll):
+        return len(ll[0]) > ll[1] and ll[1] >= 0
+    
+    def has_next(self, ll):
+        return ((len(ll[0]) - 1) > ll[1]) and ll[1] >= 0
+
+    def get_item(self, ll):
+        return ll[0][ll[1]]
+    
+    def get_next(self, ll):
+        return [ll[0], ll[1] + 1]
+        
+    def visit(self, ll, *args, **kwargs):
+        super().visit(ll, *args, **kwargs)  # UID and TYPE
+        self.output_mngr.next_key(Tokens.DATA)
+        with self.output_mngr.push(mapping=False):
+            while self.has_current(ll):#make sure list has an element in it
+                self.data_visitor.traverse(self.get_item(ll))
+                ll = self.get_next(ll)
+
