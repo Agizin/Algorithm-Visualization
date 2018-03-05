@@ -1,7 +1,17 @@
 import abc
 import os.path
 from time import time
+from enum import enum
 import svgutils.transform as svgutils
+
+class Anchor(Enum):
+    """Relative Positions on Picture"""
+    TOPLEFT = (0,0)
+    TOP = (0.5, 0)
+    LEFT = (0, 0.5)
+    CENTER = (0.5,0.5)
+    RIGHT = (1,0.5)
+    BOTTOM = (0.5,1)
 
 class DataStructureException(TypeError):
     """indicates that an instance of structures.DataStructure was expected"""
@@ -25,6 +35,7 @@ class Picture(metaclass=abc.ABCMeta):
     def __init__(self, structure, filename=None, size=None, **kwargs):
         self.structure = structure #data structure that this picture represents
         self.size = size #a requirement on max bounding box size, if None then no requirement
+        self.is_drawn = False
         
         if filename is None: #name of svg file
             filename = self._tempname()
@@ -37,26 +48,6 @@ class Picture(metaclass=abc.ABCMeta):
         except AttributeError:
             raise DataStructureException("Expected Data Structure, got {}".format(type(self.structure)))
         return "temp_{}_{}.svg".format(uid, time_str)
-
-    @abc.abstractmethod
-    def draw(self):
-        pass
-
-    def get_connection_point(self, position):
-        """Returns coordinates of a desired connection point between pictures 
-        relative to the current picture. Position is where the connection point
-        will be relative to this picture, e.g. Left, Right."""
-        
-        if position == "Left":
-            connection_point = (0, self.size[1]/2)
-        elif position == "Right":
-            connection_point = (self.size[0], self.size[1]/2)
-        #TODO: add top, bottom, positions. Anything else?
-        elif position is None:
-            connection_point = None
-        else:
-            raise ValueError("Unknown position: {}".format(position))
-        return connection_point
 
     def scale(self, new_size):
         if not os.path.isfile(self.filename):
@@ -72,5 +63,11 @@ class Picture(metaclass=abc.ABCMeta):
         new_svg.append([old_pic])
         new_svg.save(self.filename)
         self.size= new_size
-        
+
+    def getAnchorPosition(self, anchor):
+        return (anchor.value[0]*width, anchor.value[1]*height)
+
+    @abc.abstractmethod
+    def draw(self):
+        pass        
         

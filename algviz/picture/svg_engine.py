@@ -87,4 +87,7 @@ class SVGEngine():
         arrow = self.svg_doc.line(start, end, marker_end=arrow_marker.get_funciri(), **kwargs)
         self.svg_doc.add(arrow)
 
+    def draw_pointer(self, start, end, **kwargs):
+        #TODO: implement pointer drawing
+        draw_arrow(start, end, **kwargs)
 #TODO: pointer start dots, regular polygons, text along a line

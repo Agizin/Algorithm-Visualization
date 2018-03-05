@@ -2,140 +2,199 @@ import abc
 import svgutils.transform as svgutils
 import os
 
-from .picture import Picture
+from .elements import *
+from .picture import Anchor, Picture
 from .leaf_picture import StringLeaf
 from .svg_engine import SVGEngine
 
 
-class InternalPicture(Picture, metaclass = abc.ABCMeta):
-    class Node(metaclass = abc.ABCMeta):
-        def __init__(self, center):
-            self.center = center
+class InternalPicture(Picture, metaclass = abc.ABCMeta):        
+    pass
+        
+class ConnectionMap:
+    class Connection:
+        def __init__(self, start_point, connect_pic, anchor):
+            self.start_point = start_point
+            self.connect_pic = connect_pic
+            if !connect_pic.is_drawn:
+                connect_pic.draw()
+            self.anchor = anchor
+            self.left_shift_y = 0
+            self.right_shift_y = 0
 
-        @abc.abstractmethod
-        def draw(self, svg_engine):
-            pass
+        def is_pointer(self):
+            return False
 
-    class CircleNode(Node):
-        def __init__(self, center, radius = 50, **kwargs):
-            self.radius = radius
-            self.properties = kwargs
-            InternalPicture.Node.__init__(self, center)
+    class PointerConnection(Connection):
+        def __init__(self, start_point, connect_pic, anchor, pointer_style={}):
+            self.pointer_style = pointer_style
+            super().__init__(self, start_point, connect_pic, anchor)
 
-        def draw(self, svg_engine):
-            svg_engine.draw_circle(self.center, self.radius, **self.properties)
+        def is_pointer(self):
+            return True
+    
+    def __init__(self, startPicture):
+        self.connections = {}
+        assert(isInstance(startPicture, InternalPicture))
+        self.picture = startPicture
+        
+    def add_connection(self, point, connect_pic, anchor=None, pointer=True, pointer_style={}):
+        if self.picture.width < point[0] or self.picture.height < point[1]:
+            raise TypeError("Point not included in picture")
+        if pointer:
+            self.connections.append(PointerConnection(point, connect_pic, anchor, pointer_style))
+        else:
+            self.connections.append(Connection(point, connect_pic, anchor))
 
-    def combine_svg(self, connection_dict):
-        """Current picture is connected to its subpictures.
-        This method must be passed a dictionary that maps connection points in the
-        current picture to a 2-tuple of subpicture and the
-        position/orientation of its connection (e.g. a Left position will connect the
-        current picture to the left side of the subpicture). If the position is None,
-        then the subpicture will overlap the current picture at the connection point."""
-        #TODO: expand to allow top, bottom, positions (at least).
-        #TODO: add kwarg to scale down subpictures
-        assert self.size is not None
-        current_size = self.size
+    def draw_connections(self):
+        #TODO: reimplement with GraphViz?
+        cur_pic_width = self.picture.width
+        cur_pic_height = self.picture.height
         left_width = 0
         right_width = 0
         left_height = 0
         right_height = 0
-        for main_point, connection in connection_dict.items():
-            subpicture = connection[0]
-            cxn_position = connection[1]
-            if cxn_position == "Left":
-                #left connection point = placement on right of current picture
-                right_width = max(subpicture.size[0], right_width)
-                right_height += subpicture.size[1]
-            elif cxn_position == "Right":
-                #placement on left of current picture
-                left_width += max(subpicture.size[0], left_width)
-                left_height += subpicture.size[1]
-        new_size_x = left_width+self.size[0]+right_width
-        new_size_y = max(left_height, self.size[1], right_width)
-        new_svg = svgutils.SVGFigure("{!s}px".format(new_size_x), "{!s}px".format(new_size_y))
-        main_svg = svgutils.fromfile(self.filename)
+        for connection in self.connections:
+            if !connection.is_pointer():
+                #in place connections dont change size of picture
+                continue
+            connect_size = connection.connect_pic.size
+            if connection.anchor == Anchor.LEFT:
+                #left anchor = picture should be placed to right of main picture
+                right_width = max(connect_size[0], right_width)
+                right_height += connect_size[1]
+            elif connection.anchor == Anchor.RIGHT:
+                #right anchor = picture placed on left of main picture
+                left_width = max(connection_size[1], left_width)
+                left_height += connect_size[1]
+            else:
+                #Otherwise, picture connected on whatever side its pointer is closes to
+                #There are better ways to do this, but I wont improve unless graphviz doesn't pan out
+                if connection.start_point[0] <= self.picture_size[0]/2:
+                    left_width = max(connection_size[1], left_width)
+                    left_height += connect_size[1]
+                else:
+                    right_width = max(connect_size[0], right_width)
+                    right_height += connect_size[1]
+        new_width = left_width + cur_pic_width + right_width
+        new_height = max(left_height, cur_pic_height, right_height)
+        main_svg = svgutils.fromfile(self.picture.filename)
         main_root = main_svg.getroot()
         main_root.moveto(left_width, 0)
         subpics = [main_root]
-        #svg_engine = SVGEngine(self.filename, self.size)
-        left_cur_shift_y = 0
-        right_cur_shift_y = 0
-        arrows_file = "temp_arrows.svg"
-        arrows_svg_engine  = SVGEngine(arrows_file, (new_size_x, new_size_y))
-        for main_point, connection in connection_dict.items():
-            subpicture = connection[0]
-            cxn_position = connection[1]
-            #TODO: move svgutils interactions to SVGEngine?
+        pointers = []
+        for connection in self.connections:
+            subpic = connection.connect_pic
+            anchor = connection.anchor
+            anchorPos = connection.connect_pic.getAnchorPosition(anchor)
+            if !connection.is_pointer():
+                shift_x = left_width + connection.start_point[0] - anchorPos[0]
+                shift_y = connection.start_point[1] -anchorPos[0]
+            else:
+                if anchor == Anchor.LEFT or anchor == Anchor.TOPLEFT:
+                    pic_side = "right"
+                elif anchor == Anchor.RIGHT or connection.start_point <= self.picture_size[0]/2:
+                    pic_side = "left"
+                else:
+                    pic_side = "right"
+                if pic_side == "left":
+                    shift_x = 0
+                    shift_y = self.left_shift_y
+                    self.left_shift_y += subpic.height
+                else:
+                    shift_x = left_width + self.picture.width
+                    shift_y = self.right_shift_y
+                    self.right_shift_y += subpic.height
+                newStartPoint = (connection.startPoint[0]+left_width, connection.startPoint[1])
+                endPoint = (anchorPos[0]+shift_x, anchorPos[1]+shift_y)
+                pointers.append(PointerElement(newStartPoint, endPoint, **self.pointer_style))
             subpic_svg = svgutils.fromfile(subpicture.filename)
             subpic_root = subpic_svg.getroot()
-            if cxn_position is None:
-                #no connection point, image centered at main point
-                shift_x = left_width + main_point[0]
-                shift_y = main_point[1]
-            elif cxn_position == "Left":
-                shift_x = left_width + self.size[0]
-                shift_y = left_cur_shift_y
-                left_cur_shift_y += subpicture.size[1]
-            else: #right connection
-                shift_x = 0
-                shift_y = right_cur_shift_y
-                right_cur_shift_y += subpicture.size[1]
-            subpic_root.moveto(shift_x, shift_y, scale=0.95)
-            if cxn_position is not None:
-                cxn_point = subpicture.get_connection_point(cxn_position)
-                cxn_point_shift = (cxn_point[0]+shift_x, cxn_point[1]+shift_y)
-                main_point_shift = (main_point[0]+left_width, main_point[1])
-                arrows_svg_engine.draw_arrow(main_point_shift, cxn_point_shift)
+            subpic_root.moveto(shift_x, shift_y)
             subpics.append(subpic_root)
-            if subpicture.filename[:4].lower() == "temp":
+            if subpic.filename[:4].lower() == "temp":
                 os.remove(subpicture.filename)
-        arrows_svg_engine.save()
+        new_svg = svgutils.SVGFigure("{!s}px".format(new_width), "{!s}px".format(new_height))
         new_svg.append(subpics)
-        arrows_svg = svgutils.fromfile(arrows_file)
-        arrows_root = arrows_svg.getroot()
-        new_svg.append(arrows_root)
-        os.remove(arrows_file)
+        pointers_temp_file = "temp_pointers.svg"
+        pointers_svg_engine = SVGEngine(pointers_temp_file, (new_width, new_height))
+        for pointer in pointers:
+            pointer.draw(pointers_svg_engine)
+        pointers_svg_engine.save()
+        pointers_svg = svgutils.fromfile(pointers_temp_file)
+        pointers_root = pointers_svg.getroot()
+        new_svg.append(pointers_root)
+        os.remove(pointers_temp_file)
         new_svg.save(self.filename)
-        self.size = (new_size_x, new_size_y)
-            
+        self.picture.width = new_width
+        self.picture.height = new_height
+    
             
 class TreePicture(InternalPicture): #should be in its own file but not for now b/c convenient
 
-    class TreeNode(InternalPicture.CircleNode):
-        def __init__(self, center, data, children = None, **kwargs):
-            self.children = [] if children is None else children
-            kwargs["fill_opacity"] = kwargs.get("fill_opacity", 1)
-            radius = kwargs.pop("radius", None)
-            self.properties = kwargs
-            if isinstance(data, Picture):
-                self.data = data
-            else:
-                self.data = Picture.make_picture(data, **kwargs)
-            InternalPicture.CircleNode.__init__(self, center, radius, **kwargs)
+    class TreeNode(NodeElement):
+        def __init__(self, center, data, width, height, shape=Shape.Circle, style={}, **kwargs):
+            self.data = data
+            self.childNodes = []
+            self.edges = []
+            self.edge_class = kwargs.pop('edge_class', EdgeElement)
+            if !issubclass(self.edge_class, EdgeElement):
+                raise TypeError("Expected {} is not an edge subclass".format(edge_class))
+            self.edge_style = kwargs.pop("edge_style", {})
+            self.scale_to_data = kwargs.pop("scale_to_data", True)
+            if self.scale_to_data:
+                data_picture = Picture.make_picture(node_data, style=self.style)
+                if not isinstance(datapicture, structures.Pointer):
+                    if !data_picture.is_drawn:
+                        data_picture.draw()
+                    margin = kwargs.get("margin", 10)
+                    width = data_picture.width + margin
+                    height = data_picture.height + margin
+            super().__init__(center, width, height, shape, style, **kwargs)
 
         def is_leaf(self):
-            return len(self.children) == 0
+            return len(self.childNodes) == 0
 
-        def add_child(self, node):
-            if self.is_leaf():
-                self.children = [node]
+        def add_child(self, child):
+            if isinstance(child, TreeNode):
+                self.childNodes.append(node)
             else:
-                self.children.append(node)
+                raise TypeError("{} is not a tree node".format(child))
+
+        def add_childen(self, children):
+            for child in children:
+                self.add_child(child)
+
+        def _make_edge(self, child):
+            assert(child in children)
+            source = self.center
+            destination = (child.center[0], child.center[1]-child.height/2)
+            newEdge = (self.edge_class)(source, destination, self.edge_style)
+            return newEdge
+            
+        def draw(self, svg_engine):
+            for child in self.childNodes:
+                edge = self._make_edge(child)
+                edge.draw(svg_engine)
+                child.draw(svg_engine)
+            super().draw(svg_engine)
     
-    def __init__(self, tree_root, filename=None, size=None, **kwargs):
+    def __init__(self, tree_root, filename=None, style={}, **kwargs):
         self.root = tree_root
-        self.node_radius = kwargs.pop("node_radius", 50)
+        self.style=style
+        self.node_shape = kwargs.pop("node_shape", Shape.CIRCLE)
+        self.node_width = kwargs.pop("node_width", 50)
+        self.node_height = kwargs.pop("node_height", 50)
         self.edge_length = kwargs.pop("edge_length", 200)
         self.node_sep = kwargs.pop("node_sep", 10)
-        self.properties = kwargs
-    
-        if size is None:
-            size = (self._pixel_width(self.root), self._pixel_height(self.root))
-            
+        self.pointer_style = kwargs.pop("pointer_Style", {})
+        #TODO: better way to assign default values?
+
+        self.width = self._width_estimate(self.root)
+        self.height = self._height_estimate(self.root)
         InternalPicture.__init__(self, tree_root, filename, size)
 
-    def _pixel_width(self, root):
+    def _width_estimate(self, root):
         if root.is_leaf():
             return 2*self.node_radius+self.node_sep
         width = 0
@@ -144,17 +203,17 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
             width += child_width
         return width
 
-    def _pixel_height(self, root):
+    def _height_estimate(self, root):
         #TODO: improve height heuristic for tall trees.
         tree_height = root.tree_height()
         return tree_height*(2*self.node_radius + self.edge_length) - self.edge_length + self.node_sep
 
-    def _draw_nodes(self, parent, level_roots, svg_engine):
+    def _layout_nodes(self, parent, level_roots, svg_engine):
         sub_widths = []
         for subtree in level_roots:
             sub_width = self.width_dict.get(subtree, self._pixel_width(subtree))
             if subtree in self.width_dict:
-                sub_widths.appen(self.width_dict[subtree])
+                sub_widths.append(self.width_dict[subtree])
             else:
                 sub_width = self._pixel_width(subtree)
                 self.width_dict[subtree] = sub_width
@@ -168,53 +227,52 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
             x = far_x_bound + sub_width/2
             far_x_bound += sub_width
             if subtree is not None:
-                new_node = TreePicture.TreeNode((x,y), subtree.data, radius=self.node_radius, **self.properties)
+                new_node = TreePicture.TreeNode((x,y), subtree.data,
+                                                self.node_width, self.node_height,
+                                                self.node_shape, style)
                 parent.add_child(new_node)
-                svg_engine.draw_line(parent.center, new_node.center)
                 if not subtree.is_leaf():
-                    self._draw_nodes(new_node, subtree.children, svg_engine)
-                else:
-                    new_node.draw(svg_engine)
-        parent.draw(svg_engine)
+                    self._layout_nodes(new_node, subtree.children)
 
     def _draw_data(self, root_node):
         """Draws/Connects Tree subpictures to the current picture"""
         node_queue = [root_node]
-        connection_dict = {} #connection point on tree mapped to 2-tuple of subpicture and connection position, i.e. left, right, etc
+        connections = ConnectionMap(self)
         while len(node_queue) > 0:
             node = node_queue.pop(0)
             node_data = node.data #subpicture
-            node_data.draw()
+            
             if (isinstance(node_data, StringLeaf) and node_data.size[0] < 2*node.radius
                 and node_data.size[1] < node.radius):
-                #Strings of small size are placed within the node
-                node_data.draw()
-                upper_left_x = node.center[0] - node_data.size[0]/3 #TODO: find better heuristic for centering?
-                upper_left_y = node.center[1] - node_data.size[1]/2
-                connection_dict[(upper_left_x, upper_left_y)] = (node_data, None)
+                connections.add_connection(node.center, data_picture, anchor=Anchor.CENTER,
+                                           pointer=False)
             else:
                 node_center_x = node.center[0]
                 picture_center_x = node_data.size[0]/2
                 if node_center_x <= picture_center_x: #Node is on left side of picture
-                    position = "Right" #Right side of data will be connected to left of picture
+                    anchor = Anchor.RIGHT
                 else:
-                    position = "Left"
-                connection_dict[node.center] = (node_data, position)
+                    anchor = Anchor.LEFT
+                connections.add_connection(node.center, data_picture, anchor=anchor,
+                                           pointer=True, pointer_style=self.pointer_style)
             for child in node.children:
                 node_queue.append(child)
-        self.combine_svg(connection_dict)
+        connection_map.draw_connections()
                   
 
     def draw(self):
-
-        #size is determined and node centers are determined without drawing
+        if self.is_drawn and os.path.isfile(self.filename):
+            return
         self.width_dict = {}
         root_x = self.size[0]/2
         root_y = self.node_radius + self.node_sep/2
         root_center = (root_x, root_y)
         root_node = TreePicture.TreeNode(root_center, self.root.data,
-                                        radius=self.node_radius,**self.properties)
-        svg_engine = SVGEngine(self.filename, self.size)
-        self._draw_nodes(root_node, self.root.children, svg_engine)
+                                         self.node_width, self.node_height,
+                                         self.node_shape, self.style)
+        svg_engine = SVGEngine(self.filename, (self.width, self.height))
+        self._layout_nodes(root_node, self.root.children)
+        self.root.draw(svg_engine)
         svg_engine.save()
         self._draw_data(root_node)
+        self.is_drawn = True
