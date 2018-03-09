@@ -1,20 +1,20 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "5e8fc6baf1666ec9b09e547e42962949b4ec5f9b38dfc5945d8c5d961d6482a3"
+            "sha256": "49e0d7ee156793fd13c21ed7d2715e4cd2307fbae1648e7e499a89840fe78d27"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
             "implementation_version": "3.5.2",
-            "os_name": "nt",
-            "platform_machine": "AMD64",
+            "os_name": "posix",
+            "platform_machine": "x86_64",
             "platform_python_implementation": "CPython",
-            "platform_release": "10",
-            "platform_system": "Windows",
-            "platform_version": "10.0.16299",
+            "platform_release": "4.4.0-43-Microsoft",
+            "platform_system": "Linux",
+            "platform_version": "#1-Microsoft Wed Dec 31 14:42:53 PST 2014",
             "python_full_version": "3.5.2",
             "python_version": "3.5",
-            "sys_platform": "win32"
+            "sys_platform": "linux"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -27,6 +27,13 @@
         ]
     },
     "default": {
+        "pygraphviz": {
+            "hashes": [
+                "sha256:7c294cbc9d88946be671cc0d8602aac176d8c56695c0a7d871eadea75a958408",
+                "sha256:1aabe3efabe3691e889aec6d10ae28e7e10f3c153fa1235a4cd58b0724481fca"
+            ],
+            "version": "==1.3.1"
+        },
         "pyparsing": {
             "hashes": [
                 "sha256:fee43f17a9c4087e7ed1605bd6df994c6173c1e977d7ade7b651292fab2bd010",
@@ -41,10 +48,10 @@
         },
         "svgwrite": {
             "hashes": [
-                "sha256:679507bb71c4eefb0d6c15643dbb8489ed0e3088330f46df30d7dc2abd897a82",
-                "sha256:451c7f16220d654be0cfdbd13cc6f23aca69e6fd3ca19254e80b5f6d9ca6af5a"
+                "sha256:4e84a0cd48bb116d26fa6f157e5902271bd1efb5ac5c6157d9811fda5a3d95a3",
+                "sha256:968c99f193f34f0fa7f0b3e82f49b93789c7c45cd89ce190480f16020d41ab79"
             ],
-            "version": "==1.1.11"
+            "version": "==1.1.12"
         }
     },
     "develop": {}
