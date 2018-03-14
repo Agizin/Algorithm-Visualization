@@ -14,6 +14,14 @@ class TempFileMixin(object):
     def teardown_tempfile(self):
         self.tempfile.close()
 
+    def write_tempfile(self, text):
+        with self.patch_stdout():
+            print(text, end="")
+
+    def open_tempfile_read(self):
+        self.tempfile.seek(0)
+        return self.tempfile
+
     @contextlib.contextmanager
     def patch_stdout(self):
         try:
