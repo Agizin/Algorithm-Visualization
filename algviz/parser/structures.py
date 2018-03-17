@@ -42,8 +42,6 @@ ObjectTableReference = collections.namedtuple("ObjectTableReference", ("uid",))
 Snapshot = collections.namedtuple("Snapshot", ("names", "obj_table"))
 
 class DataStructure(metaclass=abc.ABCMeta):
-    picture_type = None #static variable that indicates the appropriate picture class for each structure
-    #is there a better way to implement mapping structure types to picture types?
 
     def __init__(self, uid=None, metadata=None):
         self.uid = uid
@@ -219,8 +217,6 @@ class TreeNode(DataStructure):
     # A common superclass could be used for linked-list nodes, since linked
     # lists are just skinny trees
 
-    picture_type = internal_picture.TreePicture
-
     def __init__(self, data, children=None, **kwargs):
         super().__init__(**kwargs)
         self.data = data
@@ -261,7 +257,6 @@ class TreeNode(DataStructure):
         return super().__hash__()
 
 class String(collections.UserString, DataStructure):
-    picture_type = leaf_picture.StringLeaf
 
     def __init__(self, *args, **kwargs):
         collections.UserString.__init__(self, *args)

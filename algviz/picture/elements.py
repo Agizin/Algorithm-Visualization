@@ -8,8 +8,8 @@ class ShapeException(TypeError):
 
 class Shape(Enum):
     #TODO: expand
-    CIRCLE = auto()
-    RECT = auto()
+    CIRCLE = 0
+    RECT = 1
 
     def draw(self, center, width, height, svg_engine, **kwargs):
         if self is Shape.CIRCLE:
@@ -31,12 +31,12 @@ class RectangularElement(PictureElement, metaclass = abc.ABCMeta):
         self.height = height
 
     @abc.abstractmethod
-    def dtaw(self):
+    def draw(self):
         pass
 
 class NodeElement(RectangularElement):
     def __init__(self, center, width, height, shape = None, style={}, **kwargs):
-        if shape != None and !isinstance(shape,Shape):
+        if shape != None and not isinstance(shape,Shape):
             for name, member in Shape.__members__.items():
                 if name.lower() == shape:
                     self.shape = member
