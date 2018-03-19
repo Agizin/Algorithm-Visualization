@@ -55,7 +55,7 @@ class DecorationElement(PictureElement, metaclass=abc.ABCMeta):
     pass
 
 class EdgeElement(DecorationElement):
-    def __inti__(self, source, destination, style, **kwargs):
+    def __init__(self, source, destination, style, **kwargs):
         self.source = source
         self.destination = destination
         self.style = style
