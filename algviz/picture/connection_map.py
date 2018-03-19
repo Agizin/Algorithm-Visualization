@@ -1,3 +1,6 @@
+import svgutils.transform as svgutils
+import os
+
 from algviz.parser import structures
 from .anchor import Anchor
 from .svg_engine import SVGEngine
@@ -27,16 +30,16 @@ class ConnectionMap:
             return True
     
     def __init__(self, startPicture):
-        self.connections = {}
+        self.connections = []
         self.picture = startPicture
         
     def add_connection(self, point, connect_pic, anchor=None, pointer=True, pointer_style={}):
         if self.picture.width < point[0] or self.picture.height < point[1]:
             raise TypeError("Point not included in picture")
         if pointer:
-            self.connections.append(PointerConnection(point, connect_pic, anchor, pointer_style))
+            self.connections.append(ConnectionMap.PointerConnection(point, connect_pic, anchor, pointer_style))
         else:
-            self.connections.append(Connection(point, connect_pic, anchor))
+            self.connections.append(ConnectionMap.Connection(point, connect_pic, anchor))
 
     def draw_connections(self):
         #TODO: reimplement with GraphViz?
@@ -77,11 +80,12 @@ class ConnectionMap:
         pointers = []
         for connection in self.connections:
             subpic = connection.connect_pic
+            subpic.draw()
             anchor = connection.anchor
-            anchorPos = connection.connect_pic.getAnchorPosition(anchor)
+            anchorPos = connection.connect_pic.get_anchor_position(anchor)
             if not connection.is_pointer():
-                shift_x = left_width + connection.start_point[0] - anchorPos[0]
-                shift_y = connection.start_point[1] -anchorPos[0]
+                shift_x = left_width + connection.start_point[0] - anchorPos[0]/2
+                shift_y = connection.start_point[1] - anchorPos[0]/2
             else:
                 if anchor == Anchor.LEFT or anchor == Anchor.TOPLEFT:
                     pic_side = "right"
@@ -100,12 +104,12 @@ class ConnectionMap:
                 newStartPoint = (connection.startPoint[0]+left_width, connection.startPoint[1])
                 endPoint = (anchorPos[0]+shift_x, anchorPos[1]+shift_y)
                 pointers.append(PointerElement(newStartPoint, endPoint, **self.pointer_style))
-            subpic_svg = svgutils.fromfile(subpicture.filename)
+            subpic_svg = svgutils.fromfile(subpic.filename)
             subpic_root = subpic_svg.getroot()
             subpic_root.moveto(shift_x, shift_y)
             subpics.append(subpic_root)
-            if subpic.filename[:4].lower() == "temp":
-                os.remove(subpicture.filename)
+            if subpic.filename[:4].lower() == "temp":#TODO: clean up leftover svg files better
+                os.remove(subpic.filename)
         new_svg = svgutils.SVGFigure("{!s}px".format(new_width), "{!s}px".format(new_height))
         new_svg.append(subpics)
         pointers_temp_file = "temp_pointers.svg"
@@ -116,7 +120,8 @@ class ConnectionMap:
         pointers_svg = svgutils.fromfile(pointers_temp_file)
         pointers_root = pointers_svg.getroot()
         new_svg.append(pointers_root)
-        os.remove(pointers_temp_file)
-        new_svg.save(self.filename)
+        os.remove(pointers_temp_file) 
+        new_svg.save(self.picture.filename)
         self.picture.width = new_width
         self.picture.height = new_height
+        self.picture = (self.picture.width, self.picture.height) #TODO: remove

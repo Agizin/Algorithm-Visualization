@@ -1,8 +1,6 @@
 import collections
 import abc
 
-from algviz.picture import internal_picture, leaf_picture 
-
 class ObjectTable(dict):
     """A table of references to objects.  Used to retrieve an object given its UID.
 
