@@ -1,4 +1,5 @@
 import svgwrite
+import os
 
 DEFAULTS = {"stroke_width" : "3", "stroke" : "black",
             "fill" : "white", "fill_opacity" : "1",
@@ -6,6 +7,7 @@ DEFAULTS = {"stroke_width" : "3", "stroke" : "black",
 
 class SVGEngine():
     def __init__(self, filename, size):
+        self.filename = filename
         self.svg_doc = svgwrite.Drawing(filename,size)
 
     def __str__(self):
@@ -13,6 +15,9 @@ class SVGEngine():
 
     def save(self):
         self.svg_doc.save()
+
+    def delete(self):
+        os.remove(self.filename)
             
     def getSVG(self):
         return self.svg_doc

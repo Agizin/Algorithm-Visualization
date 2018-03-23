@@ -1,5 +1,6 @@
 import abc
 import os.path
+import os
 import svgutils.transform as svgutils
 from time import time
 from inspect import isabstract
@@ -53,17 +54,22 @@ class Picture(object, metaclass=abc.ABCMeta):
         self.width = width
         self.height = height
         self.is_drawn = False
-
         if filename is None: #name of svg file
             filename = self._tempname()
         self.filename = filename
-        
+
     def _tempname(self):
         try:
             uid = self.structure.uid #TODO: add ability to draw the same structure (by uid) multiple times
         except AttributeError:
             raise DataStructureException("Expected Data Structure, got {}".format(type(self.structure)))
         return "temp_{}.svg".format(uid)
+
+    def is_temporary(self):
+        return self.filename[:4].lower() == "temp"
+
+    def delete(self):
+        os.remove(self.filename)
 
     def scale_down(self, new_width, new_height):
         if not os.path.isfile(self.filename):
@@ -173,7 +179,8 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
     def _height_estimate(self, root):
         #TODO: improve height heuristic for tall trees.
         tree_height = root.tree_height()
-        return tree_height*(2*self.node_width + self.edge_length) - self.edge_length + self.node_sep
+        return tree_height*(2*self.node_width + self.edge_length) - self.edge_length
+    
             
     def _layout_nodes(self, parent, level_roots):
         sub_widths = []
