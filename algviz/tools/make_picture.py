@@ -1,7 +1,7 @@
 import sys
 
 from algviz.parser import json_objects
-from algviz.parser import picture
+from algviz.picture import picture
 
 json = sys.argv[1]
 if len(ays.argv) > 2:
