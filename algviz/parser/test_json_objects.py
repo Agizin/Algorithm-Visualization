@@ -46,6 +46,14 @@ class JSONObjectsTestCase(unittest.TestCase):
                          structures.Array([1, 2, 3, snapshot.names["my_widget"]],
                                           uid="testuid"))
 
+    def test_can_handle_missing_outermost_close_bracket(self):
+        """Sometimes it's more trouble than it's worth to print the last
+        closing brace, since that amounts to saying "I'm confident there will
+        be no more printing after this!"
+        """
+        self.assertEqual(json_objects.reads('[[{"T": "widget"}]]'),
+                         json_objects.reads('[[{"T": "widget"}]'))
+
 class GenericDecodingTestCase(unittest.TestCase):
     """Make a subclass of this to test decoding of a specific type of object.
 
