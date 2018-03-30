@@ -95,10 +95,27 @@ class Decoration(PictureElement):
 
 class Arrow(Decoration):
     """Gets drawn as an arrow or line of some kind"""
-    def __init__(self, origin, destination, **kwargs):
+    def __init__(self, origin, destination, orig_anchor=None, dest_anchor=None, **kwargs):
         self.origin = origin
         self.destination = destination
+        self.orig_anchor = orig_anchor
+        self.dest_anchor = dest_anchor
         super().__init__(**kwargs)
+
+    def anchor_pairs(self):
+        """Iterate through all allowed pairs of anchors
+        (origin_anchor, dest_anchor)
+        """
+        # TODO unit test for this method
+        def _anchors(given_anchor):
+            if given_anchor is not None:
+                yield given_anchor
+            else:
+                yield from Anchors
+        for src_anch in _anchors(self.orig_anchor):
+            for dest_anch in _anchors(self.dest_anchor):
+                yield (src_anch, dest_anch)
+
 
 class StraightArrow(Arrow):
     pass

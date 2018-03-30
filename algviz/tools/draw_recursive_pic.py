@@ -6,7 +6,7 @@ import svgwrite
 import sys
 
 from algviz.parser import json_objects
-from algviz.picture import elements, pic_dispatch
+from algviz.picture import elements, layout_dispatch
 
 # This is just sort of a toss-off to see if recursive pictures work at all
 
@@ -47,13 +47,17 @@ class AwfulSVGPlotter:
         src, dest = arrow.origin, arrow.destination  # nodes
         def distance(pt1, pt2):
             return sum((x - y) ** 2 for x, y in zip(pt1, pt2))
-        def iter_connections(rect):
+        def iter_connections(rect, given_anch):
+            if given_anch is None:
+                anchors = elements.Anchor
+            else:
+                anchors = [given_anch]
             top_left = self.things_drawn[rect]
-            for anch in elements.Anchor.top, elements.Anchor.bottom:  #in elements.Anchor:
+            for anch in anchors:  #in elements.Anchor:
                 yield elements.from_top_left_corner(rect, top_left, anch)
         src_pt, dest_pt = min(((s, d)
-                               for s in iter_connections(src)
-                               for d in iter_connections(dest)),
+                               for s in iter_connections(src, arrow.orig_anchor)
+                               for d in iter_connections(dest, arrow.dest_anchor)),
                               key=lambda pair: distance(*pair))
         self.doc.add(self.doc.line(src_pt, dest_pt, style="stroke:rgb(50,50,50);stroke-width:2"))
         self.pending_arrows[src].discard(arrow)
@@ -101,19 +105,19 @@ def main():
                         help="var name of object to be drawn.  Takes precedence over UID.")
     args = parser.parse_args()
     snapshot = json_objects.decode_snapshot_text(args.infile.read())
-    choose_pic = pic_dispatch.make_drawing_function(None)
+    choose_layout = layout_dispatch.make_drawing_function(None)
     if args.var:
         obj = snapshot.names[args.var]
     else:
         obj = snapshot.obj_table.getuid(args.uid)
-    pic_cls = choose_pic(obj)
+    layout_cls = choose_layout(obj)
     engine = AwfulSVGPlotter(font_px=15, )
-    pic = pic_cls(obj, engine=engine, make_child=choose_pic)
+    layout = layout_cls(obj, engine=engine, make_child=choose_layout)
     with engine.make_svg(args.outfile):
-        for elem in pic.elements():
+        for elem in layout.elements():
             if isinstance(elem, tuple):
                 coord, elem = elem
-                # coord = tuple(c + 200 for c in coord)
+                coord = tuple(c + 200 for c in coord)
             else:
                 coord = None
             engine.draw_thing(elem, coord=coord)
