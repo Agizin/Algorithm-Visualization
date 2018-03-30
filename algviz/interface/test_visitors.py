@@ -20,7 +20,7 @@ class VisitorTestCaseMixin(TempFileMixin):
         text = self.read_tempfile()
         return text, json_objects.decode_json(text)
 
-    def to_hell_and_back_full_result(self, instance, **kwargs):
+    def to_json_and_back_full_result(self, instance, **kwargs):
         """Convenience for test cases where you only need to encode and decode
         one instance.  Returns (json_text, decoded_object)
         """
@@ -28,9 +28,9 @@ class VisitorTestCaseMixin(TempFileMixin):
             self.visitor.traverse(instance, **kwargs)
         return self.read_result()
 
-    def to_hell_and_back(self, instance, **kwargs):
+    def to_json_and_back(self, instance, **kwargs):
         """Visit the object, print it out, decode it, and return the resulting object"""
-        _, snapshots = self.to_hell_and_back_full_result(instance, **kwargs)
+        _, snapshots = self.to_json_and_back_full_result(instance, **kwargs)
         return snapshots[-1].obj_table.getuid(self.visitor.uid(instance))
 
     def test_metadata(self):
@@ -42,7 +42,7 @@ class VisitorTestCaseMixin(TempFileMixin):
                          msg="""This test doesn't work.  We want different
                          instances of identical dictionaries, or else the test
                          can be passed by calling `metadata.clear()`.""")
-        result = self.to_hell_and_back(self.sample_instance(),
+        result = self.to_json_and_back(self.sample_instance(),
                                        metadata=mk_metadata())
         self.assertEqual(mk_metadata(), result.metadata)
 
@@ -90,6 +90,6 @@ class ArrayVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
         return [1, 2, 3]
 
     def test_array_export_and_import(self):
-        arr = self.to_hell_and_back([1, 2, 3])
+        arr = self.to_json_and_back([1, 2, 3])
         self.assertIsInstance(arr, structures.Array)
         self.assertEqual(list(arr), [1, 2, 3])

@@ -207,11 +207,26 @@ class TreeVisitor(Visitor):
     type_ = Tokens.TREE_NODE_T
 
     def is_placeholder(self, tree):
-        """For non-existent nodes in rigidly-structured trees"""
+        """Test if the given tree is a placeholder for a non-existent node in
+        rigidly-structured trees.
+
+        For example, in the binary search tree:
+
+            ...........
+            ....2......
+            ..1...3....
+            ........4..
+            ...........
+
+        The first child of `3` should be a placeholder.
+
+        By default, tests if the tree is None.
+        """
         return tree is None
 
     @abc.abstractmethod
     def iter_children(self, tree):
+        """Obviously, return an iterable/generator with the subtrees"""
         yield from []
 
     @abc.abstractmethod

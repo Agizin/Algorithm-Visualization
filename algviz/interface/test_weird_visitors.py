@@ -1,7 +1,7 @@
 import unittest
 import tempfile
 
-from algviz.parser import json_objects
+from algviz.parser import json_objects, structures
 from . import weird_visitors
 from . import output
 
@@ -30,6 +30,13 @@ class BitmapVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
 
 class ListTreeVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
     visitor_cls = weird_visitors.ListTreeVisitor
+
+    def test_tree_visit(self):
+        tree = self.to_json_and_back([1, 2])
+        self.assertEqual(tree.data, 1)
+        self.assertEqual(tree.children[1], structures.Null)
+        self.assertEqual(tree.children[0].data, 2)
+        self.assertEqual(tree.children[0].children, [structures.Null] * 2)
 
     def sample_instance(self):
         return [4, 2, 6, 1, 3, 5, 7]
