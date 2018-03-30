@@ -11,6 +11,7 @@ setup(name='algviz',
           "console_scripts": [
               "algviz_graph_mockup=algviz.tools.graph_drawing_mockup:main",
               "algviz_quicksort_example=algviz.tools.quicksort_tree:main",
+              "algviz_complex_picture_demo=algviz.tools.complex_drawing_mockup:main",
           ]},
       install_requires=['pygraphviz'],
 )

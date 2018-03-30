@@ -9,6 +9,7 @@ once we have one.  (The two branches of "quicksort" would be performed by the
 
 import sys
 import argparse
+from algviz.parser.json_objects import Tokens
 
 from algviz.interface import output
 
@@ -25,7 +26,7 @@ def mk_qs_node_visitor(output_manager):
     def visit_qs_node(uid_str, items):
         nonlocal output_manager
         result = {"uid": uid_str,
-                  "type": "btnode",
+                  "type": Tokens.TREE_NODE_T,
                   "data": {"type": "array",
                            "data": items}}
 
