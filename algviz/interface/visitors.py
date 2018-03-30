@@ -1,6 +1,7 @@
 import abc
 
 from algviz.parser.json_objects import Tokens
+from algviz.parser import structures
 
 class Visitor(metaclass=abc.ABCMeta):
 
@@ -190,3 +191,44 @@ class WidgetVisitor(Visitor):
 
     def visit(self, *args, **kwargs):
         return super().visit(*args, **kwargs)
+
+@default_for_type(type(None))
+class NullVisitor(Visitor):
+    type_ = Tokens.NULL_T
+
+    def uid(self, item):
+        return structures.Null.uid
+
+    def visit(self, *args, **kwargs):
+        return super().visit(*args, **kwargs)
+
+class TreeVisitor(Visitor):
+    """A visitor for trees of all shapes and sizes"""
+    type_ = Tokens.TREE_NODE_T
+
+    def is_placeholder(self, tree):
+        """For non-existent nodes in rigidly-structured trees"""
+        return tree is None
+
+    @abc.abstractmethod
+    def iter_children(self, tree):
+        yield from []
+
+    @abc.abstractmethod
+    def get_data(self, tree):
+        return None
+
+    def traverse(self, tree, **kwargs):
+        if self.is_placeholder(tree):
+            NullVisitor(self.output_mngr).traverse(tree, **kwargs)
+        else:
+            super().traverse(tree, **kwargs)
+
+    def visit(self, tree, **kwargs):
+        super().visit(tree, **kwargs)
+        self.output_mngr.next_key(Tokens.DATA)
+        self.data_visitor.traverse(self.get_data(tree))
+        self.output_mngr.next_key(Tokens.CHILDREN)
+        with self.output_mngr.push(mapping=False):
+            for child in self.iter_children(tree):
+                self.traverse(child)

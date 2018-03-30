@@ -26,3 +26,10 @@ class BitmapVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
         # (True == 1 but id(True) != id(1))
         self._next_sample_bool ^= True
         return True if self._next_sample_bool else 1
+
+
+class ListTreeVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
+    visitor_cls = weird_visitors.ListTreeVisitor
+
+    def sample_instance(self):
+        return [4, 2, 6, 1, 3, 5, 7]
