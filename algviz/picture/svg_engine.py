@@ -74,7 +74,7 @@ class SVGEngine():
         """text defined by center point"""
         
         kwargs = self._add_defaults(**kwargs)
-        text = self.svg_doc.text(text, center, text_anchor="middle", dominant_obaseline="central")
+        text = self.svg_doc.text(text, center, text_anchor="middle", dominant_baseline="central")
         #note: some image viewers don't recognize the dominant_baseline attribute
         self.svg_doc.add(text)
 

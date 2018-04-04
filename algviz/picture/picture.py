@@ -87,7 +87,7 @@ class Picture(object, metaclass=abc.ABCMeta):
             return
         old_svg = svgutils.fromstring(self.getSVG())
         old_pic = old_svg.getroot()
-        if abs(new_width-self.width) <= abs(new_height-self.height):
+        if new_width-self.width <= new_height-self.height:
             scale_factor = new_width/float(self.width)
         else:
             scale_factor = new_height/float(self.height)
@@ -282,7 +282,8 @@ class StringLeaf(LeafPicture):
 
     def draw(self, position = None):
         svg = SVGEngine(self.width, self.height)
-        svg.draw_text_default(self.text, (0,self.font_size), **self.properties)
+        svg.draw_text_center(self.text, (self.width/2,self.height/2), **self.properties)
+        
         self.writeSVG(str(svg))
 
     def text_length(self):

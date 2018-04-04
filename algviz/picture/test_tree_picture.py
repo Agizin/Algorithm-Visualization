@@ -1,10 +1,10 @@
 from .picture import TreePicture
 from algviz.parser import structures
 
-a = structures.String("A", uid=1)
-b = structures.String("B", uid=2)
-c = structures.String("C", uid=3)
-d = structures.String("D", uid=4)
+a = structures.String("AAAAAAAA", uid=1)
+b = structures.String("BBBBBb", uid=2)
+c = structures.String("CCCCCCCCccc", uid=3)
+d = structures.String("DDDD", uid=4)
 leafb = structures.TreeNode(b, uid=5)
 leafc = structures.TreeNode(c, uid=6)
 treed = structures.TreeNode(d, [leafb, leafc], uid=7)
