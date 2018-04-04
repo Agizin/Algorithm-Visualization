@@ -2,41 +2,48 @@ import unittest
 import collections
 from . import elements
 
-class AnchorTestCase(unittest.TestCase):
-    TestRectangle = collections.namedtuple("TestRectangle", ("width", "height"))
 
-    def test_bottom_right_corner_anchor(self):
-        # The top left corner of a rectangle of width 10 and height 6, with its
-        # bottom right corner at (0, 0), would be (-10, -6).
-        self.assertEqual(tuple(elements.top_left_corner(
-            self.TestRectangle(width=10, height=6),
-            (0, 0),
-            elements.Anchor.bottom_right)),
-                         (-10, -6))
-                         
-            
-    def test_center_anchor(self):
-        self.assertEqual(tuple(elements.top_left_corner(
-            self.TestRectangle(width=300, height=7),
-            (5, 10),
-            elements.Anchor.center)),
-                         (-145, 6.5))
+class RectElementTestCaseMixin:
 
-    def test_anchor_translate(self):
-        self.assertEqual(tuple(elements.anchor_translate(
-            self.TestRectangle(width=100, height=50),
-            (0, 0),
-            elements.Anchor.left,
-            elements.Anchor.top)),
-                         (50, -25))
+    def _make_element(self, width, height):
+        return self.element_cls(width, height)
 
-    def test_from_top_left_corner(self):
+    def test_scaling(self):
+        elt = self._make_element(5, 5)
+        elt.scale(2.5)
+        self.assertEqual(elt.width, 12.5)
+        self.assertEqual(elt.width, elt.height)
 
-        self.assertEqual(tuple(elements.from_top_left_corner(
-            self.TestRectangle(width=50, height=70),
-            (0, 0),
-            anchor=elements.Anchor.center)),
-                         (25, 35))
+class NodeElementTestCase(RectElementTestCaseMixin, unittest.TestCase):
+    element_cls = elements.NodeElement
+
+class PointerSourceTestCase(RectElementTestCaseMixin, unittest.TestCase):
+    element_cls = elements.PointerSource
+
+class StringElementTestCase(RectElementTestCaseMixin, unittest.TestCase):
+    element_cls = elements.StringElement
+    def _make_element(self, width, height):
+        return self.element_cls(width, height, text="sample")
+
+class NullElementTestCase(RectElementTestCaseMixin, unittest.TestCase):
+    element_cls = elements.NullElement
+
+class DecorationTestCaseMixin:
+
+    def test_can_scale_decoration(self):
+        self._make_element().scale(5)
+
+class ArrowTestCase(DecorationTestCaseMixin, unittest.TestCase):
+    element_cls = elements.Arrow
+    def _make_element(self):
+        return self.element_cls(elements.NodeElement(1, 2),
+                                elements.NodeElement(3, 4))
+
+class StraightArrowTestCase(ArrowTestCase):
+    element_cls = elements.StraightArrow
+
+class SplineArrowTestCase(ArrowTestCase):
+    element_cls = elements.SplineArrow
 
 if __name__ == "__main__":
     unittest.main()
