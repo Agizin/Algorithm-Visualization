@@ -39,22 +39,28 @@ def layout_graph_nodes(nodes, edges, nodeAttrs=None,
     G = pgv.AGraph()
 
     c = 0
+    name_to_node = {}
+    def label_node(node):
+        nonlocal c, name_to_node
+        if node.label is None:
+            node.label = str(c)
+            c += 1
+        name_to_node[node.label] = node
+
     for node in nodes:
-        node.label = str(c)
+        label_node(node)
         G.add_node(node, fixedsize=True,
                    width=node.width, height=node.height, **nodeAttrs)
         c += 1
     for (node1, node2) in edges:
-        if node1.label is None:
-            node1.label = str(c)
-            c += 1
-        if node2.label is None:
-            node2.label = str(c)
-            c += 1
+        label_node(node1)
+        label_node(node2)
         G.add_edge(node1, node2, **edgeAttrs)
 
     G.layout(prog=algo)
     dictNodesLocations = {}
+    def get_position(node):
+        return tuple(int(x) for x in node.attr['pos'].split(','))
     for node in G.nodes():
-        dictNodesLocations[node.get_name()] = node.attr['pos']
+        dictNodesLocations[name_to_node[node.get_name()]] = get_position(node)
     return dictNodesLocations
