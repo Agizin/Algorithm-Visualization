@@ -1,8 +1,9 @@
+from typing import List, Tuple, Dict
 import pygraphviz as pgv
 
 
 class NodeSpec():
-    def __init__(self, width, height):
+    def __init__(self, width: float, height: float) -> None:
         self.width = width
         self.height = height
         self.label = None
@@ -11,26 +12,27 @@ class NodeSpec():
         return self.label
 
 
-def node_spec(width, height):
+def node_spec(width: float = .75, height: float = .50) -> NodeSpec:
     # can extend with keyword arguments if we extend node
     # without breaking existing client code
     return NodeSpec(width, height)
 
 
-def layout_graph_nodes(nodes, edges, nodeAttrs=None,
-                       edgeAttrs=None, algo="dot"):
-    """ Maps node to their coordinates.
+Edge = Tuple[NodeSpec, NodeSpec]
+Attrs = Dict[str, str]
+Location = Tuple[int, int]
+NodesToLocations = Dict[str, Location]
 
-    nodeNames: a list of names for the nodes
-    nodeWidths: a dictionary mapping the name of a node to a width specified
-        by the caller. Default .75.
-    nodeHeights: a dictionary mapping the names of a node to a height specified
-        by the caller. Default .50.
-    nodeAttrs: a dictionary that can specify the attributes of a given node
-    edges: a list of tuples of 2 node names which represents an edge between
-        the two of them
-    edgeAttrs: a dictionary that can specify the attributes of a given edge
-    algo: The algorithm to use when assigning positions to nodes in the graph
+
+def layout_graph_nodes(nodes: List[NodeSpec],
+                       edges: List[Edge],
+                       nodeAttrs: Attrs=None,
+                       edgeAttrs: Attrs=None,
+                       algo: str="dot") -> NodesToLocations:
+    """ Maps nodes to their coordinates.
+
+    Applicable values for nodeAttrs, edgeAttrs, and algo can be found in the
+    pygraphviz/graphviz docs.
     """
     if nodeAttrs is None:
         nodeAttrs = {}
@@ -40,6 +42,7 @@ def layout_graph_nodes(nodes, edges, nodeAttrs=None,
 
     c = 0
     name_to_node = {}
+
     def label_node(node):
         nonlocal c, name_to_node
         if node.label is None:
@@ -59,6 +62,7 @@ def layout_graph_nodes(nodes, edges, nodeAttrs=None,
 
     G.layout(prog=algo)
     dictNodesLocations = {}
+
     def get_position(node):
         return tuple(int(x) for x in node.attr['pos'].split(','))
     for node in G.nodes():
