@@ -1,5 +1,4 @@
 import svgutils.transform as svgutils
-import os
 
 from algviz.parser import structures
 from .anchor import Anchor
@@ -75,7 +74,6 @@ class ConnectionMap:
         new_height = max(left_height, self.picture.height, right_height)
         self.picture.width = new_width
         self.picture.height = new_height
-        self.picture.size = (new_width, new_height) #TODO: remove
         return left_width, left_height, right_width, right_height
 
     def _determine_pointer_placement(self, connection, anchor, mid):
@@ -91,7 +89,7 @@ class ConnectionMap:
         start_pic_height = self.picture.width
         start_pic_width = self.picture.height
         left_width, left_height, right_width, right_width = self._resize_pic() #defines new margin sizes
-        main_svg = svgutils.fromfile(self.picture.filename)
+        main_svg = svgutils.fromstring(self.picture.getSVG())
         main_root = main_svg.getroot()
         main_root.moveto(left_width, 0)
         subpics = [main_root]
@@ -117,20 +115,16 @@ class ConnectionMap:
                 newStartPoint = (connection.startPoint[0]+left_width, connection.startPoint[1])
                 endPoint = (anchorPos[0]+shift_x, anchorPos[1]+shift_y)
                 pointers.append(PointerElement(newStartPoint, endPoint, **self.pointer_style))
-            subpic_svg = svgutils.fromfile(subpic.filename)
+            subpic_svg = svgutils.fromstring(subpic.getSVG())
             subpic_root = subpic_svg.getroot()
             subpic_root.moveto(shift_x, shift_y)
             subpics.append(subpic_root)
-            if subpic.is_temporary():#TODO: clean up leftover svg files better
-                subpic.delete()
         new_svg = svgutils.SVGFigure("{!s}px".format(self.picture.width), "{!s}px".format(self.picture.height))
         new_svg.append(subpics)
-        pointers_svg_engine = SVGEngine(pointers_temp_file, (self.picture.width, self.picture.height))
+        pointers_svg_engine = SVGEngine(self.picture.width, self.picture.height)
         for pointer in pointers:
             pointer.draw(pointers_svg_engine)
-        pointers_svg_engine.save()
-        pointers_svg = svgutils.fromfile(pointers_temp_file)
+        pointers_svg = svgutils.fromstring(str(pointers_svg_engine))
         pointers_root = pointers_svg.getroot()
         new_svg.append(pointers_root)
-        new_svg.save(self.picture.filename)
-        pointers_svg_engine.delete()
+        self.picture.writeSVG(new_svg.to_str())

@@ -6,18 +6,15 @@ DEFAULTS = {"stroke_width" : "3", "stroke" : "black",
             "font_size" : "24pt"}
 
 class SVGEngine():
-    def __init__(self, filename, size):
-        self.filename = filename
-        self.svg_doc = svgwrite.Drawing(filename,size)
+    def __init__(self, width, height):
+        self.size = (width,height)
+        self.svg_doc = svgwrite.Drawing(None,self.size)
 
     def __str__(self):
         return self.svg_doc.tostring()
 
-    def save(self):
+    def save(self, filename):
         self.svg_doc.save()
-
-    def delete(self):
-        os.remove(self.filename)
             
     def getSVG(self):
         return self.svg_doc

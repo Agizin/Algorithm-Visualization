@@ -1,6 +1,5 @@
 import abc
-import os.path
-import os
+import sys
 import svgutils.transform as svgutils
 from time import time
 from inspect import isabstract
@@ -10,6 +9,8 @@ from .elements import *
 from .anchor import Anchor
 from .connection_map import ConnectionMap
 from .svg_engine import DEFAULTS, SVGEngine
+
+assert(sys.version_info >= (3,6))
 
 class DataStructureException(TypeError):
     """Type Error indicates that a  DataStructure instance or subclass was expected 
@@ -48,35 +49,43 @@ class Picture(object, metaclass=abc.ABCMeta):
                                              .format(structure_type))
             Picture.structure_map[structure_type] = cls
 
-    def __init__(self, structure, width, height, filename=None, **kwargs):
+    def __init__(self, structure, width, height, **kwargs):
         self.structure = structure #data structure that this picture represents
-        self.size = (width, height) #TODO: remove
         self.width = width
         self.height = height
-        self.is_drawn = False
-        if filename is None: #name of svg file
-            filename = self._tempname()
-        self.filename = filename
+        self.svg_str = ''
 
-    def _tempname(self):
-        try:
-            uid = self.structure.uid #TODO: add ability to draw the same structure (by uid) multiple times
-        except AttributeError:
-            raise DataStructureException("Expected Data Structure, got {}".format(type(self.structure)))
-        return "temp_{}.svg".format(uid)
+    def __str__(self):
+        return self.svg_str
 
-    def is_temporary(self):
-        return self.filename[:4].lower() == "temp"
+    def getSVG(self):
+        return self.svg_str
 
-    def delete(self):
-        os.remove(self.filename)
+    def writeSVG(self, svg_string):
+        self.svg_str = svg_string
+
+    def save(self, filename):
+        if(self.is_drawn()):
+            if isinstance(self.svg_str,bytes):
+                writemode = 'wb'
+            elif isinstance(self.svg_str,str):
+                writemode = 'w'
+            else:
+                raise Exception('Svg is neither string nor bytes')
+            with open(filename, writemode) as f:
+                f.write(self.svg_str)
+        else:
+            raise Exception("picture not drawn")
+
+    def is_drawn(self):
+        return len(self.svg_str) != 0
 
     def scale_down(self, new_width, new_height):
-        if not os.path.isfile(self.filename):
+        if not self.is_drawn():
             self.draw()
         if new_width <= self.width and new_height <= self.height:
             return
-        old_svg = svgutils.fromfile(self.filename)
+        old_svg = svgutils.fromstring(self.getSVG())
         old_pic = old_svg.getroot()
         if abs(new_width-self.width) <= abs(new_height-self.height):
             scale_factor = new_width/float(self.width)
@@ -85,10 +94,9 @@ class Picture(object, metaclass=abc.ABCMeta):
         old_pic.scale_xy(x=scale_factor, y=scale_factor)
         self.width = self.width*scale_factor
         self.height = self.height*scale_factor
-        self.size = (self.width, self.height) #TODO: remove
-        new_svg = svgutils.SVGFigure(self.size)
+        new_svg = svgutils.SVGFigure((self.width, self.height))
         new_svg.append([old_pic])
-        new_svg.save(self.filename)
+        self.writeSVG(new_svg.to_str())
 
     def get_anchor_position(self, anchor):
         return (anchor.value[0]*self.width, anchor.value[1]*self.height)
@@ -100,7 +108,7 @@ class Picture(object, metaclass=abc.ABCMeta):
 class InternalPicture(Picture, metaclass = abc.ABCMeta):        
     pass            
             
-class TreePicture(InternalPicture): #should be in its own file but not for now b/c convenient
+class TreePicture(InternalPicture):
     
     class TreeNode(NodeElement):
         def __init__(self, center, data, width, height, shape=Shape.CIRCLE, style={}, **kwargs):
@@ -153,7 +161,7 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
     def get_structure_type():
         return structures.TreeNode
     
-    def __init__(self, tree_root, filename=None, style={}, **kwargs):
+    def __init__(self, tree_root, style={}, **kwargs):
         self.root = tree_root
         self.style=style
         self.node_shape = kwargs.pop("node_shape", Shape.CIRCLE)
@@ -165,7 +173,7 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
         #TODO: better way to assign default values?
         width = self._width_estimate(self.root)
         height = self._height_estimate(self.root)
-        super().__init__(tree_root, width, height, filename)
+        super().__init__(tree_root, width, height)
 
     def _width_estimate(self, root):
         if root.is_leaf():
@@ -235,21 +243,20 @@ class TreePicture(InternalPicture): #should be in its own file but not for now b
         connections.draw_connections()
 
     def draw(self):
-        if self.is_drawn and os.path.isfile(self.filename):
+        if self.is_drawn():
             return
         self.width_dict = {}
-        root_x = self.size[0]/2
+        root_x = self.width/2
         root_y = self.node_height + self.node_sep/2
         root_center = (root_x, root_y)
         root_node = TreePicture.TreeNode(root_center, self.root.data,
                                          self.node_width, self.node_height,
                                          self.node_shape, self.style)
-        svg_engine = SVGEngine(self.filename, (self.width, self.height))
+        svg_engine = SVGEngine(self.width, self.height)
         self._layout_nodes(root_node, self.root.children)
         root_node.draw(svg_engine)
-        svg_engine.save()
+        self.writeSVG(str(svg_engine))
         self._draw_data(root_node)
-        self.is_drawn = True
 
 class LeafPicture(Picture, metaclass=abc.ABCMeta):
     pass
@@ -260,7 +267,7 @@ class StringLeaf(LeafPicture):
     def get_structure_type():
         return structures.String
 
-    def __init__(self, text, font_size=DEFAULTS["font_size"], filename=None, **kwargs):
+    def __init__(self, text, font_size=DEFAULTS["font_size"], **kwargs):
         self.text = str(text)
         try:
             self.font_size = int(font_size)
@@ -268,15 +275,17 @@ class StringLeaf(LeafPicture):
             self.font_size = int(font_size[:-2]) #removes units (pt,cm,etc.) from font size string
         width = self.font_size*(len(self.text)) #text width is heuristically determined, will be inexact.
         height = self.font_size+1
-        super().__init__(text, width, height, filename)
+        super().__init__(text, width, height)
         kwargs["stroke_width"] = kwargs.get("stroke_width", "1")
         kwargs["fill"] = kwargs.get("fill", "black")
         self.properties = kwargs
 
     def draw(self, position = None):
-        svg = SVGEngine(self.filename, self.size)
+        svg = SVGEngine(self.width, self.height)
         svg.draw_text_default(self.text, (0,self.font_size), **self.properties)
-        svg.save()
+        self.writeSVG(str(svg))
 
     def text_length(self):
         return len(self.text)
+
+
