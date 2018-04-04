@@ -13,6 +13,8 @@ _default_mapping = {
     structures.Array: rec_layout.StupidArrayLayout,
     structures.Graph: rec_layout.CircularGraphLayout,
     structures.Node: rec_layout.NodeLayout,
+    structures.NullType: rec_layout.NullLayout,
+    structures.Pointer: rec_layout.PointerLayout,
 }
 
 def add_defaults(mapping):
@@ -20,7 +22,7 @@ def add_defaults(mapping):
     for key, default in _default_mapping.items():
         mapping.setdefault(key, default)
 
-def make_drawing_function(config):
+def make_layout_chooser(config):
     mapping = map_metadata_key_to_layout_subclass(config)
     add_defaults(mapping)
     def choose_layout(obj):
