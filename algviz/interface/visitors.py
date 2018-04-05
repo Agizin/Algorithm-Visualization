@@ -1,5 +1,6 @@
 import abc
 
+from algviz.parser import structures
 from algviz.parser.json_objects import Tokens
 
 class Visitor(metaclass=abc.ABCMeta):
@@ -190,3 +191,28 @@ class WidgetVisitor(Visitor):
 
     def visit(self, *args, **kwargs):
         return super().visit(*args, **kwargs)
+
+@default_for_type(structures.NullType)
+class NullVisitor(Visitor):
+    type_ = Tokens.NULL_T
+
+    def uid(self, item):
+        return structures.Null.uid
+
+    def visit(self, *args, **kwargs):
+        return super().visit(*args, **kwargs)
+
+@default_for_type(structures.LinkedList)
+class LinkedListVisitor(Visitor):
+    type_ = Tokens.LINKED_LIST_T
+    def visit(self, ll, *args, **kwargs):
+        super().visit(ll, *args, **kwargs)  # UID and TYPE
+        self.output_mngr.next_key(Tokens.DATA)
+        self.data_visitor.traverse(ll.get_data())
+        self.output_mngr.next_key(Tokens.SUCCESSOR)
+        if isinstance(ll.successor, structures.NullType):
+            NullVisitor(self.output_mngr).traverse(ll.successor, **kwargs)
+        else:
+            super().traverse(ll.successor, **kwargs)
+
+
