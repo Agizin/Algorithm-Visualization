@@ -45,6 +45,8 @@ class NodeElement(RectangularElement):
         else:
             self.shape = shape
         self.style = style
+        if not hasattr(self, 'data'):
+            self.data = None
         super().__init__(center, width, height, **kwargs)
 
     def draw(self, svg_engine):

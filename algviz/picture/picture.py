@@ -13,17 +13,29 @@ from .svg_engine import DEFAULTS, SVGEngine
 
 assert(sys.version_info >= (3,6))
 
+"""
+Picture classes are abstractions of SVGs representing data structures.
+"""
+
+
+
 class DataStructureException(TypeError):
     """Type Error indicates that a  DataStructure instance or subclass was expected 
     and an appropriate one was not recieved"""
     pass
 
 class Picture(object, metaclass=abc.ABCMeta):
+    """Picture classes are abstractions of SVGs representing data structures.
+
+    Each picture subclass should specify the type of structure it represents and the logic
+    for drawing it to an SVG."""
+    
     structure_map = {} #Maps a Data Structure subclass to the Picture subclass that visualizes it.
 
     @staticmethod
     def make_picture(structure, *args, **kwargs):
-        """Selects a picture class for the given structure."""
+        """Selects a picture class for the given structure. 
+        Use this method to create a picture class of an unknown structure"""
         #TODO: add rules for slecting between picture classes that have same structure type.
         if not isinstance(structure, structures.DataStructure):
             raise DataStructureException("Expected structure to be instance of DataStructure, got {}"
@@ -37,6 +49,7 @@ class Picture(object, metaclass=abc.ABCMeta):
     @staticmethod
     @abc.abstractmethod
     def get_structure_type():
+        """Method should return the structure type (from parser.structures) that this class visualizes"""
         pass
 
     def __init_subclass__(cls, **kwargs):
@@ -52,9 +65,9 @@ class Picture(object, metaclass=abc.ABCMeta):
 
     def __init__(self, structure, width, height, **kwargs):
         self.structure = structure #data structure that this picture represents
-        self.width = width
-        self.height = height
-        self.svg_str = ''
+        self.width = width #width of the SVG (pixels)
+        self.height = height #height of the SVG (pixels)
+        self.svg_str = '' #Contains the contents of the SVG. Note: may be represented as a string or as bytes.
 
     def __str__(self):
         return self.svg_str
@@ -66,22 +79,23 @@ class Picture(object, metaclass=abc.ABCMeta):
         self.svg_str = svg_string
 
     def save(self, filename):
-        if(self.is_drawn()):
-            if isinstance(self.svg_str,bytes):
-                writemode = 'wb'
-            elif isinstance(self.svg_str,str):
-                writemode = 'w'
-            else:
-                raise Exception('Svg is neither string nor bytes')
-            with open(filename, writemode) as f:
-                f.write(self.svg_str)
+        """Saves the SVG represented to the given filename."""
+        if not self.is_drawn():
+            self.draw()
+        if isinstance(self.svg_str,bytes):
+            writemode = 'wb'
+        elif isinstance(self.svg_str,str):
+            writemode = 'w'
         else:
-            raise Exception("picture not drawn")
+            raise Exception('Svg is neither string nor bytes')
+        with open(filename, writemode) as f:
+            f.write(self.svg_str)
 
     def is_drawn(self):
         return len(self.svg_str) != 0
 
     def scale_down(self, new_width, new_height):
+        """Scales the picture SVG proportionally to below the given dimensions"""
         if not self.is_drawn():
             self.draw()
         if new_width <= self.width and new_height <= self.height:
@@ -102,17 +116,51 @@ class Picture(object, metaclass=abc.ABCMeta):
             new_svg = svgutils.SVGFigure((self.width, self.height))
             new_svg.append([old_pic])
             self.writeSVG(new_svg.to_str())
-                
 
     def get_anchor_position(self, anchor):
+        """When given an anchor (see: anchor.py), returns the position of that anchor on this SVG"""
         a = (anchor.value[0]*self.width, anchor.value[1]*self.height)
         return a
 
     @abc.abstractmethod
     def draw(self):
+        """Method that generates the svg for the structure"""
         pass        
         
-class InternalPicture(Picture, metaclass = abc.ABCMeta):        
+class InternalPicture(Picture, metaclass = abc.ABCMeta):
+    """Picture classes that contain subpictures that need to be composed into one"""
+
+    @abc.abstractmethod
+    def _node_generator(self):
+        pass
+    
+    def _draw_node_data(self):
+        """Draws/Connects subpictures to the current picture"""
+        connections = ConnectionMap(self)
+        contains_subpictures = False
+        for node in self._node_generator():
+            if node.data is None:
+                continue
+            contains_subpictures=True
+            if isinstance(node.data, structures.Pointer):
+                pointerTo = Picture.make_picture(node.data.referent, style=self.style)
+                connections.add_connection(node.center, pointerTo, anchor=anchor, pointer=True)
+                node_center_x = node.center[0]
+                picture_center_x = node_data.width/2
+                if node_center_x <= picture_center_x: #Node is on left side of picture
+                    anchor = Anchor.RIGHT
+                else:
+                    anchor = Anchor.LEFT
+                connections.add_connection(node.center, pointerTo, anchor=anchor,
+                                           pointer=True, pointer_style=self.pointer_style)
+            else:
+                #If not a pointer, we scale the subpicture fit into node
+                node_data_pic = Picture.make_picture(node.data, style=self.style)
+                node_data_pic.scale_down(node.width, node.height)
+                connections.add_connection(node.center, node_data_pic, anchor=Anchor.CENTER,
+                                           pointer=False)
+        if contains_subpictures:
+            connections.draw_connections()
     pass            
             
 class TreePicture(InternalPicture):
@@ -147,8 +195,11 @@ class TreePicture(InternalPicture):
                 raise TypeError("{} is not a tree node".format(child))
 
         def add_childen(self, children):
-            for child in children:
+            for child in childNodes:
                 self.add_child(child)
+
+        def get_children(self):
+            return self.childNodes
 
         def _make_edge(self, child):
             assert(child in self.childNodes)
@@ -223,32 +274,14 @@ class TreePicture(InternalPicture):
                 if not subtree.is_leaf():
                     self._layout_nodes(new_node, subtree.children)
 
-    def _draw_data(self, root_node):
-        """Draws/Connects Tree subpictures to the current picture"""
-        node_queue = [root_node]
-        connections = ConnectionMap(self)
+    def _node_generator(self):
+        node_queue = [self.root_node]
         while len(node_queue) > 0:
             node = node_queue.pop(0)
-            if isinstance(node.data, structures.Pointer):
-                pointerTo = Picture.make_picture(node.data.referent, style=self.style)
-                connections.add_connection(node.center, pointerTo, anchor=anchor, pointer=True)
-                node_center_x = node.center[0]
-                picture_center_x = node_data.width/2
-                if node_center_x <= picture_center_x: #Node is on left side of picture
-                    anchor = Anchor.RIGHT
-                else:
-                    anchor = Anchor.LEFT
-                connections.add_connection(node.center, pointerTo, anchor=anchor,
-                                           pointer=True, pointer_style=self.pointer_style)
-            else:
-                #If not a pointer, we scale the subpicture fit into node
-                node_data_pic = Picture.make_picture(node.data, style=self.style)
-                node_data_pic.scale_down(node.width, node.height)
-                connections.add_connection(node.center, node_data_pic, anchor=Anchor.CENTER, pointer=False)
-            for child in node.childNodes:
-                node_queue.append(child)
-        connections.draw_connections()
-
+            for child_node in node.get_children():
+                node_queue.append(child_node)
+            yield node
+            
     def draw(self):
         if self.is_drawn():
             return
@@ -256,14 +289,14 @@ class TreePicture(InternalPicture):
         root_x = self.width/2
         root_y = self.node_height + self.node_sep/2
         root_center = (root_x, root_y)
-        root_node = TreePicture.TreeNode(root_center, self.root.data,
+        self.root_node = TreePicture.TreeNode(root_center, self.root.data,
                                          self.node_width, self.node_height,
                                          self.node_shape, self.style)
         svg_engine = SVGEngine(self.width, self.height)
-        self._layout_nodes(root_node, self.root.children)
-        root_node.draw(svg_engine)
+        self._layout_nodes(self.root_node, self.root.children)
+        self.root_node.draw(svg_engine)
         self.writeSVG(str(svg_engine))
-        self._draw_data(root_node)
+        self._draw_node_data()
 
 class LeafPicture(Picture, metaclass=abc.ABCMeta):
     pass
