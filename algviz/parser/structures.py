@@ -162,7 +162,7 @@ class Node(DataStructure):
     # This is a minimal node that isn't responsible for its own edges.  This
     # allows for a more flexible graph implementation (i.e. allowing subgraphs
     # over the same nodes).  If you want to store edges within your node, use
-    # TreeNode or a subclass instead of this.
+    # Tree or a subclass instead of this.
     def __init__(self, data, **kwargs):
         super().__init__(**kwargs)
         self.data = data
@@ -209,7 +209,7 @@ class Widget(DataStructure):
     def untablify(self, obj_table):
         pass
 
-class TreeNode(DataStructure):
+class Tree(DataStructure):
     """A node with some number of children in a fixed order.  Edges are implicit."""
     # A common superclass could be used for linked-list nodes, since linked
     # lists are just skinny trees
@@ -224,7 +224,7 @@ class TreeNode(DataStructure):
 
     def __eq__(self, other):
         return (super().__eq__(other) and
-                isinstance(other, TreeNode) and
+                isinstance(other, Tree) and
                 self.data == other.data and
                 self.children == other.children)
 

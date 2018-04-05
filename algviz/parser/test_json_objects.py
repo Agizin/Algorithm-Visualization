@@ -147,8 +147,8 @@ class ArrayDecodingTestCase(GenericDecodingTestCase):
         self.unexpected_object = self.factory([1, 2, 3, 4, structures.String("goodbye")])
         self.same_uid_object = self.factory([1, 2, 3])
 
-class TreeNodeDecodingTestCase(GenericDecodingTestCase):
-    cls_under_test = structures.TreeNode
+class TreeDecodingTestCase(GenericDecodingTestCase):
+    cls_under_test = structures.Tree
     def set_up_expectations(self):
         self.snapshot_input = [
             {"T": "treenode", "uid": "L", "children": ["LL", "#null"], "data": 1},

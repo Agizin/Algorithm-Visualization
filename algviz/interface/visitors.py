@@ -206,6 +206,7 @@ class TreeVisitor(Visitor):
     """A visitor for trees of all shapes and sizes"""
     type_ = Tokens.TREE_NODE_T
 
+    @abc.abstractmethod
     def is_placeholder(self, tree):
         """Test if the given tree is a placeholder for a non-existent node in
         rigidly-structured trees.
