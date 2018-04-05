@@ -19,12 +19,14 @@ def main():
     parser.add_argument("--var", "-r", default=None, type=str,
                         help="var name of object to be drawn.  Takes precedence over UID.")
     args = parser.parse_args()
-    snapshot = json_objects.decode_snapshot_text(args.infile.read())
-    if args.var:
-        obj = snapshot.names[args.var]
+    snapshots = json_objects.read(args.infile)
+    config = {"module": "recursive"}
+    if args.var is not None:
+        config[pic_main._keys.var] = args.var
     else:
-        obj = snapshot.obj_table.getuid(args.uid)
-    print(pic_main.layout_and_draw(obj), file=args.outfile, end="")
+        config[pic_main._keys.uid] = args.uid
+    config[pic_main._keys.snapshot] = "0"
+    print(pic_main.make_svg(snapshots, config), file=args.outfile, end="")
 
 if __name__ == "__main__":
     main()
