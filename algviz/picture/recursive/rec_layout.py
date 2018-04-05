@@ -329,13 +329,10 @@ def create_layout(obj, choose_layout, svg_hint):
         nxt_obj = objects_needed.pop()
         if nxt_obj in objects_drawn:
             continue
-        print("drawing", nxt_obj.uid)
-        print("drawn:", ", ".join(o.uid for o in objects_drawn))
         new_layout =  mk_layout(nxt_obj)
         layouts = add_to_disjoint_layouts(layouts, new_layout,
                                           may_be_redundant=False)
         objects_drawn.update(new_layout.objects_in_layout())
         objects_needed.update(req.ptr_obj.referent
                               for req in new_layout.pointer_requirements())
-    print(objects_drawn)
     return CompositeLayout(*layouts, choose_child_cls=choose_layout, svg_hint=svg_hint)

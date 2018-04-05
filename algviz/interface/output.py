@@ -198,4 +198,3 @@ class OutputManager:
 
     def current_snapshot(self):
         return self.snapshot_ctx.cur_child
-
