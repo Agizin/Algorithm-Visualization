@@ -1,7 +1,12 @@
-from .picture import TreePicture
+from .picture import *
 from algviz.parser import structures
 
 a = structures.String("AAAAAAAA", uid=1)
+strpic = StringLeaf(a)
+strpic.draw()
+print(strpic.svg_str)
+strpic.save('string.svg')
+
 b = structures.String("BBBBBb", uid=2)
 c = structures.String("CCCCCCCCccc", uid=3)
 d = structures.String("DDDD", uid=4)

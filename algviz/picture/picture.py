@@ -3,6 +3,7 @@ import sys
 import svgutils.transform as svgutils
 from time import time
 from inspect import isabstract
+from math import floor
 
 from algviz.parser import structures
 from .elements import *
@@ -91,15 +92,21 @@ class Picture(object, metaclass=abc.ABCMeta):
             scale_factor = new_width/float(self.width)
         else:
             scale_factor = new_height/float(self.height)
-        old_pic.scale_xy(x=scale_factor, y=scale_factor)
         self.width = self.width*scale_factor
         self.height = self.height*scale_factor
-        new_svg = svgutils.SVGFigure((self.width, self.height))
-        new_svg.append([old_pic])
-        self.writeSVG(new_svg.to_str())
+        if isinstance(self,StringLeaf): #for some reason, svg_utils doesnt resize text correctly
+            self.font_size = floor(self.height)
+            self.draw()
+        else:
+            old_pic.scale_xy(x=scale_factor, y=scale_factor)
+            new_svg = svgutils.SVGFigure((self.width, self.height))
+            new_svg.append([old_pic])
+            self.writeSVG(new_svg.to_str())
+                
 
     def get_anchor_position(self, anchor):
-        return (anchor.value[0]*self.width, anchor.value[1]*self.height)
+        a = (anchor.value[0]*self.width, anchor.value[1]*self.height)
+        return a
 
     @abc.abstractmethod
     def draw(self):
@@ -282,8 +289,7 @@ class StringLeaf(LeafPicture):
 
     def draw(self, position = None):
         svg = SVGEngine(self.width, self.height)
-        svg.draw_text_center(self.text, (self.width/2,self.height/2), **self.properties)
-        
+        svg.draw_text_default(self.text, (0,self.font_size), font_size=self.font_size, **self.properties)
         self.writeSVG(str(svg))
 
     def text_length(self):

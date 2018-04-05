@@ -63,18 +63,18 @@ class SVGEngine():
         ellipse = self.svg_doc.ellipse(center, r=(rx,ry), **kwargs)
         self.svg_doc.add(ellipse)
 
-    def draw_text_default(self, text, left_upper_corner, **kwargs):
+    def draw_text_default(self, text, left_lower_corner, **kwargs):
         """text defined by upper left corner point"""
         
         kwargs = self._add_defaults(**kwargs)
-        text = self.svg_doc.text(text, left_upper_corner, **kwargs)
+        text = self.svg_doc.text(text, left_lower_corner, **kwargs)
         self.svg_doc.add(text)
 
     def draw_text_center(self, text, center, **kwargs):
         """text defined by center point"""
         
         kwargs = self._add_defaults(**kwargs)
-        text = self.svg_doc.text(text, center, text_anchor="middle", dominant_baseline="central")
+        text = self.svg_doc.text(text, center, text_anchor="middle", dominant_baseline="central", **kwargs)
         #note: some image viewers don't recognize the dominant_baseline attribute
         self.svg_doc.add(text)
 
