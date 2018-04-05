@@ -1,5 +1,4 @@
 import sys
-# import tempfile
 import io
 
 from . import output, visitors
