@@ -1,4 +1,4 @@
-import collections
+from collections import namedtuple
 import pygraphviz as pgv
 
 from typing import List, Tuple, Dict, String
@@ -71,18 +71,23 @@ def layout_graph_nodes(nodes: List[NodeSpec],
         dictNodesLocations[name_to_node[node.get_name()]] = get_position(node)
     return dictNodesLocations
 
+
 def parse_graphviz_splines(edge_pos):
-    return [Spline(s) for s in splines.split(';')]
+    return [Spline(s) for s in edge_pos.split(';')]
+
 
 Point = namedtuple("Point", ("x", "y"))
+
 
 def point_from_graphviz(graphviz_pt: String):
     return Point(float(t) for t in graphviz_pt.split(","))
 
 # BezierCurve = namedtuple("BezierCurve", ("ctrl0", "ctrl1", "endpoint"))
 
+
 def pt_to_svg(point):
     return "{} {}".format(*point)
+
 
 class BezierCurve:
     def __init__(self, ctrl0, ctrl1, endpoint):
@@ -91,9 +96,10 @@ class BezierCurve:
         self.endpoint = endpoint
 
     def to_svg(self):
-        return "C{} {} {}".format( # TODO
+        return "C{} {} {}".format(self.ctrl0, self.ctrl1, self.endpoint)
 
-class Spline:
+
+class Spline():
     def __init__(self, start_pt, *curves, arrow_tips=(None, None)):
         self.start_pt = start_pt
         self.curves = curves
@@ -106,7 +112,12 @@ class Spline:
                 yield (base, tip)
 
     def get_svg_path(self):
-        # TODO
+        curvesPaths = []
+        for curve in self.curves:
+            # TODO: explore if we can use S instead of C after the first curve:
+            # https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+            curvesPaths.append(curve.to_svg())
+        return " ".join(curvesPaths)
 
     @classmethod
     def from_graphviz(cls, edge_pos: str):
@@ -118,11 +129,11 @@ class Spline:
         startp, endp = None, None
         pt_strings = edge_pos.split(" ")
         if "e" in pt_strings[0]:
-            endp = point_from_graphviz(pt_string[0].strip("e,"))
+            endp = point_from_graphviz(pt_strings[0].strip("e,"))
             pt_strings = pt_strings[1:]
-        if "s" in pt_string[0]:
-            startp = point_from_graphviz(pt_string[0].strip("s,"))
-            pt_string = pt_strings[1:]
+        if "s" in pt_strings[0]:
+            startp = point_from_graphviz(pt_strings[0].strip("s,"))
+            pt_strings = pt_strings[1:]
         beziers = []
         points = [point_from_graphviz(pt_str for pt_str in pt_strings)]
         start_point = points[0]
