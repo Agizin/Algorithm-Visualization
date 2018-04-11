@@ -3,7 +3,7 @@ import os
 
 DEFAULTS = {"stroke_width" : "3", "stroke" : "black",
             "fill" : "white", "fill_opacity" : "1",
-            "font_size" : "24pt"}
+            "font_size" : "36pt"}
 
 class SVGEngine():
     def __init__(self, width, height):
@@ -74,8 +74,8 @@ class SVGEngine():
         """text defined by center point"""
         
         kwargs = self._add_defaults(**kwargs)
-        text = self.svg_doc.text(text, center, text_anchor="middle", dominant_baseline="central", **kwargs)
-        #note: some image viewers don't recognize the dominant_baseline attribute
+        text = self.svg_doc.text(text, center, text_anchor="middle", **kwargs)
+        #note: some image viewers don't recognize the dominant_baseline attribute  dominant_baseline="central", 
         self.svg_doc.add(text)
 
     def draw_arrow(self, start, end, **kwargs):

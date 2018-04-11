@@ -7,6 +7,8 @@ class ShapeException(TypeError):
         super().__init__(message)
 
 class Shape(Enum):
+    """Defines shape constants and how to draw them"""
+    
     #TODO: expand
     CIRCLE = 0
     RECT = 1
@@ -20,6 +22,7 @@ class Shape(Enum):
             svg_engine.draw_rect(upper_left_corner, width, height, **kwargs)
 
 class PictureElement(metaclass = abc.ABCMeta):
+    """Components of a data structure picture"""
     pass
 
 class RectangularElement(PictureElement, metaclass = abc.ABCMeta):

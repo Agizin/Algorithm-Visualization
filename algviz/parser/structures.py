@@ -223,21 +223,21 @@ class TreeNode(DataStructure):
     def is_leaf(self):
         return len(self.children) == 0
         
-    def tree_width(self):
+    def width(self):
         if self.is_leaf():
             return 1
         width = max(len(self.children),1)
         for child in self.children:
-            child_width = child.tree_width()
+            child_width = child.width()
             width = max(width, child_width)
         return width
 
-    def tree_height(self):
+    def height(self):
         if self.is_leaf():
             return 1
         height = 0
         for child in self.children:
-            child_height = child.tree_height()
+            child_height = child.height()
             height = max(height,child_height)
         return height + 1
 

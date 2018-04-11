@@ -17,8 +17,6 @@ assert(sys.version_info >= (3,6))
 Picture classes are abstractions of SVGs representing data structures.
 """
 
-
-
 class DataStructureException(TypeError):
     """Type Error indicates that a  DataStructure instance or subclass was expected 
     and an appropriate one was not recieved"""
@@ -98,7 +96,7 @@ class Picture(object, metaclass=abc.ABCMeta):
         """Scales the picture SVG proportionally to below the given dimensions"""
         if not self.is_drawn():
             self.draw()
-        if new_width <= self.width and new_height <= self.height:
+        if new_width >= self.width and new_height >= self.height:
             return
         old_svg = svgutils.fromstring(self.getSVG())
         old_pic = old_svg.getroot()
@@ -144,7 +142,7 @@ class InternalPicture(Picture, metaclass = abc.ABCMeta):
             contains_subpictures=True
             if isinstance(node.data, structures.Pointer):
                 pointerTo = Picture.make_picture(node.data.referent, style=self.style)
-                connections.add_connection(node.center, pointerTo, anchor=anchor, pointer=True)
+                connections.add_connection(node.center, pointerTo, anchor=anchor.CENTER, pointer=True)
                 node_center_x = node.center[0]
                 picture_center_x = node_data.width/2
                 if node_center_x <= picture_center_x: #Node is on left side of picture
@@ -157,7 +155,7 @@ class InternalPicture(Picture, metaclass = abc.ABCMeta):
                 #If not a pointer, we scale the subpicture fit into node
                 node_data_pic = Picture.make_picture(node.data, style=self.style)
                 node_data_pic.scale_down(node.width, node.height)
-                connections.add_connection(node.center, node_data_pic, anchor=Anchor.CENTER,
+                connections.add_connection(node.center, node_data_pic, anchor=Anchor.BOTTOM,
                                            pointer=False)
         if contains_subpictures:
             connections.draw_connections()
@@ -242,15 +240,24 @@ class TreePicture(InternalPicture):
             width += child_width
         return width
 
+    def _determine_height_coef(self, x):
+        """expirementally determined function to provide larger trees with smaller relative heights"""
+        x = float(x)
+        return (x-0.5)/(2*x**2-x+1)+0.65
+
     def _height_estimate(self, root):
         #TODO: improve height heuristic for tall trees.
-        tree_height = root.tree_height()
-        return tree_height*(2*self.node_width + self.edge_length) - self.edge_length
+        tree_height = root.height()
+        c = self._determine_height_coef(tree_height)
+        return c*tree_height*(2*self.node_width+self.edge_length) - self.edge_length
     
             
     def _layout_nodes(self, parent, level_roots):
         sub_widths = []
         for subtree in level_roots:
+            if subtree is None:
+                sub_widths.append(0)
+                continue
             sub_width = self.width_dict.get(subtree, self._width_estimate(subtree))
             if subtree in self.width_dict:
                 sub_widths.append(self.width_dict[subtree])
@@ -263,6 +270,8 @@ class TreePicture(InternalPicture):
         far_x_bound = parent.center[0] - level_length/2
         for i in range(0, len(level_roots)):
             subtree = level_roots[i]
+            if subtree is None:
+                continue
             sub_width = sub_widths[i]
             x = far_x_bound + sub_width/2
             far_x_bound += sub_width
@@ -287,7 +296,7 @@ class TreePicture(InternalPicture):
             return
         self.width_dict = {}
         root_x = self.width/2
-        root_y = self.node_height + self.node_sep/2
+        root_y = self.node_height/2+self.node_sep
         root_center = (root_x, root_y)
         self.root_node = TreePicture.TreeNode(root_center, self.root.data,
                                          self.node_width, self.node_height,
@@ -299,6 +308,7 @@ class TreePicture(InternalPicture):
         self._draw_node_data()
 
 class LeafPicture(Picture, metaclass=abc.ABCMeta):
+    """Abstract subclass for pictures that do not include subpictures"""
     pass
 
 class StringLeaf(LeafPicture):
@@ -313,16 +323,17 @@ class StringLeaf(LeafPicture):
             self.font_size = int(font_size)
         except ValueError:
             self.font_size = int(font_size[:-2]) #removes units (pt,cm,etc.) from font size string
-        width = self.font_size*(len(self.text)) #text width is heuristically determined, will be inexact.
-        height = self.font_size+1
+        width = self.font_size*(len(self.text))*0.75 #text width is heuristically determined, will be inexact.
+        height = self.font_size*0.9
         super().__init__(text, width, height)
         kwargs["stroke_width"] = kwargs.get("stroke_width", "1")
         kwargs["fill"] = kwargs.get("fill", "black")
         self.properties = kwargs
+        super().__init__(text, width, height)
 
     def draw(self, position = None):
         svg = SVGEngine(self.width, self.height)
-        svg.draw_text_default(self.text, (0,self.font_size), font_size=self.font_size, **self.properties)
+        svg.draw_text_default(self.text, (0,4*self.height/5), font_size=self.font_size, **self.properties)
         self.writeSVG(str(svg))
 
     def text_length(self):
