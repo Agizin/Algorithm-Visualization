@@ -274,23 +274,23 @@ class CompositeLayout(AbstractLayout):
 class CircularGraphLayout(AbstractLayout):
     def __init__(self, graph, **kwargs):
         super().__init__(**kwargs)
-        self.node_pics = [self.make_child(node) for node in graph.nodes]
-        if not self.node_pics:
+        self.node_layouts = [self.make_child(node) for node in graph.nodes]
+        if not self.node_layouts:
             self.finalize(width=self.svg_hint.margin, height=self.svg_hint.margin)
             return
         node_radius = max(node.width**2 + node.height**2
-                          for node in self.node_pics) ** 0.5
+                          for node in self.node_layouts) ** 0.5
         # This circumference approximation is better when there are many nodes:
-        circumference = (node_radius * 2 + self.svg_hint.margin) * len(self.node_pics)
+        circumference = (node_radius * 2 + self.svg_hint.margin) * len(self.node_layouts)
         radius = circumference / (2 * math.pi)  # distance to centers of nodes
-        for counter, node_pic in enumerate(self.node_pics):
-            angle = 2 * math.pi / len(self.node_pics) * counter
+        for counter, node_layout in enumerate(self.node_layouts):
+            angle = 2 * math.pi / len(self.node_layouts) * counter
             x = radius * math.cos(angle)
             y = radius * math.sin(angle)
-            self.add_child(node_pic, Coord(x, y), anchor=Anchor.center)
+            self.add_child(node_layout, Coord(x, y), anchor=Anchor.center)
         if graph.edges:
             to_elt = {node: layout.node_element
-                      for node, layout in zip(graph.nodes, self.node_pics)}
+                      for node, layout in zip(graph.nodes, self.node_layouts)}
             for edge in graph.edges:
                 src, dst = edge.orig, edge.dest
                 self.add_decoration(elements.StraightArrow(to_elt[src], to_elt[dst]))
