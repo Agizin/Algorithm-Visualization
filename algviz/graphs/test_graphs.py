@@ -17,13 +17,31 @@ class GraphLayoutTestCase(unittest.TestCase):
         coords = graphs.layout_graph_nodes(nodes, edges)
         self._sanity_assertions(nodes, edges, coords)
 
-    def test_layout_edge_nodes_different_from_original_nodes(self):
+    def test_edges_can_include_new_nodes(self):
         nodes = [graphs.node_spec(w, h) for w, h in
                  [(1, 1)] * 100]
         edges = [(graphs.node_spec(1, 1), graphs.node_spec(1, 1))]
         coords = graphs.layout_graph_nodes(nodes, edges)
         self.assertIsInstance(coords, dict)
         self.assertEqual(len(nodes) + len(edges)*2, len(coords))
+
+    def test_node_sizes_are_respected(self):
+        nodes = [graphs.node_spec(w, h) for w, h in
+                 [(i, 1000 - i) for i in range(1, 1000, 100)]]
+        edges = [(a, b) for a in nodes for b in nodes if a != b]
+        coords = graphs.layout_graph_nodes(nodes, edges)
+        self._sanity_assertions(nodes, edges, coords)
+
+    def test_graph_layout_is_repeatable(self):
+        nodes = [graphs.node_spec(w, h) for w, h in
+                 [(i, 1000 - i) for i in range(1, 1000, 50)]]
+        edges = [(a, b) for a in nodes for b in nodes if a != b and b != nodes[0]]
+        coords = [graphs.GraphVizGraph(nodes, edges, seed=100).get_node_locations()
+                  for _ in range(6)]
+        for coord0, coord1 in zip(coords, coords[1:]):
+            self.assertEqual(coord0, coord1)
+        different = graphs.GraphVizGraph(nodes, edges, seed=9999).get_node_locations()
+        self.assertNotEqual(coords[0], different)
 
     def _sanity_assertions(self, nodes, edges, coords):
         self.assertIsInstance(coords, dict)
@@ -47,6 +65,21 @@ class GraphLayoutTestCase(unittest.TestCase):
             for other_node, other_corner in node_locations.items():
                 if node is not other_node:
                     self._assert_nodes_do_not_overlap(node, corner, other_node, other_corner)
+
+    def test_getting_edge_splines(self):
+        nodes = [graphs.node_spec(w, h) for w, h in [(1, 2)] * 100]
+        edges = []
+        for a, b, c in zip(nodes, nodes[::-1], nodes[:1]):
+            edges.extend([(a, b), (b, c), (c, a)])
+        G = graphs.GraphVizGraph(nodes, edges, algo="circo")
+        edge_to_splines = G.get_edge_splines()
+        self.assertIsInstance(edge_to_splines, dict)
+        for edge in edges:
+            self.assertIn(edge, edge_to_splines)
+            spline = edge_to_splines[edge]
+            self.assertIsInstance(spline, graphs.Spline)
+            self.assertIsInstance(spline.to_svg_path(), str)
+        print(G.graph.graph_attr.keys())
 
 if __name__ == "__main__":
     unittest.main()
