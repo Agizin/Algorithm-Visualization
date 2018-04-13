@@ -12,14 +12,20 @@ class Shape(Enum):
     #TODO: expand
     CIRCLE = 0
     RECT = 1
+    ROUNDED_RECT = 2
 
     def draw(self, center, width, height, svg_engine, **kwargs):
         if self is Shape.CIRCLE:
             radius = min(width/2, height/2)
             svg_engine.draw_circle(center, radius, **kwargs)
         elif self is Shape.RECT:
-            upper_left_corner = (center-width/2, center-height/2)
+            upper_left_corner = (center[0]-width/2, center[1]-height/2)
             svg_engine.draw_rect(upper_left_corner, width, height, **kwargs)
+        elif self is Shape.ROUNDED_RECT:
+            upper_left_corner = (center[0]-width/2, center[1]-height/2)
+            rx = kwargs.pop("rx",5)
+            ry = kwargs.pop("ry",5)
+            svg_engine.draw_rounded_rect(upper_left_corner, width, height, rx, ry, **kwargs)
 
 class PictureElement(metaclass = abc.ABCMeta):
     """Components of a data structure picture"""
@@ -34,8 +40,14 @@ class RectangularElement(PictureElement, metaclass = abc.ABCMeta):
         self.height = height
 
     @abc.abstractmethod
-    def draw(self):
+    def draw(self, svg_engine):
         pass
+
+class BorderElement(RectangularElement):
+    """Use to define borders around objects"""
+    def draw(self, svg_engine):
+        Shape.RECT.draw(self.center, self.width, self.height, svg_engine,
+                        fill_opacity="0", stroke_width = "2")
 
 class NodeElement(RectangularElement):
     def __init__(self, center, width, height, shape = None, style={}, **kwargs):

@@ -3,6 +3,7 @@ import svgutils.transform as svgutils
 from algviz.parser import structures
 from .anchor import Anchor
 from .svg_engine import SVGEngine
+from .elements import PointerElement, BorderElement
 
 """This is what combines composes pictures into a single SVG.
 
@@ -26,9 +27,6 @@ class ConnectionMap:
                 connect_pic.draw()
             self.anchor = anchor
 
-            self.left_shift_y = 0
-            self.right_shift_y = 0
-
         def is_pointer(self):
             return False
 
@@ -38,7 +36,7 @@ class ConnectionMap:
         a pointer"""
         def __init__(self, start_point, connect_pic, anchor, pointer_style={}):
             self.pointer_style = pointer_style
-            super().__init__(self, start_point, connect_pic, anchor)
+            super().__init__(start_point, connect_pic, anchor)
 
         def is_pointer(self):
             return True
@@ -46,14 +44,31 @@ class ConnectionMap:
     def __init__(self, startPicture):
         self.connections = []
         self.picture = startPicture #base picture
+        self.left_shift_y = 0
+        self.right_shift_y = 0
         
     def add_connection(self, point, connect_pic, anchor=None, pointer=True, pointer_style={}):
         if self.picture.width < point[0] or self.picture.height < point[1]:
             raise TypeError("Point not included in picture")
         if pointer:
-            self.connections.append(ConnectionMap.PointerConnection(point, connect_pic, anchor, pointer_style))
+            print("POINTER ADDING")
+            cxn = ConnectionMap.PointerConnection(point, connect_pic, anchor, pointer_style)
         else:
-            self.connections.append(ConnectionMap.Connection(point, connect_pic, anchor))
+            cxn = ConnectionMap.Connection(point, connect_pic, anchor)
+        self.connections.append(cxn)
+        print("Connections: {}".format(self.connections))
+
+    def _connect_on_left(self, connection):
+        """Returns True if the (pointer) connection should be placed to the left of main pic.
+        Otherwise, return false - connection placed on right"""
+        if not connection.is_pointer():
+            return TypeError("Must be a pointer connection.")
+        if connection.anchor.is_on_right():
+            return True
+        elif connection.anchor.is_on_left():
+            return False #false b/c a left anchor implies we should place on right of main pic
+        return connection.start_point[0] <= self.picture.width/2
+        
 
     def _resize_pic(self):
         """If we need to add pointers to our picture, we need to create margins in the canvas
@@ -71,36 +86,19 @@ class ConnectionMap:
             if not connection.is_pointer():
                 #in place connections dont change size of picture
                 continue
-            connect_size = connection.connect_pic.size
-            if connection.anchor == Anchor.LEFT:
-                #left anchor implies picture should be placed to right of main picture
-                right_width = max(connect_size[0], right_width)
-                right_height += connect_size[1]
-            elif connection.anchor == Anchor.RIGHT:
-                #right anchor implies picture placed on left of main picture
-                left_width = max(connection_size[1], left_width)
-                left_height += connect_size[1]
+            connect_width = connection.connect_pic.width
+            connect_height = connection.connect_pic.height
+            if self._connect_on_left(connection):
+                left_width = max(connect_width, left_width)
+                right_height += connect_height
             else:
-                #Otherwise, picture connected on whatever side its pointer is closest to
-                if connection.start_point[0] <= self.picture_size[0]/2:
-                    left_width = max(connection_size[1], left_width)
-                    left_height += connect_size[1]
-                else:
-                    right_width = max(connect_size[0], right_width)
-                    right_height += connect_size[1]
+                left_width = max(connect_width, left_width)
+                left_height += connect_height
         new_width = left_width + self.picture.width + right_width
         new_height = max(left_height, self.picture.height, right_height)
         self.picture.width = new_width
         self.picture.height = new_height
         return left_width, left_height, right_width, right_height
-
-    def _determine_pointer_placement(self, connection, anchor, mid):
-        if anchor == Anchor.LEFT or anchor == Anchor.TOPLEFT:
-            pic_side = "right"
-        elif anchor == Anchor.RIGHT or connection.start_point <= mid:
-            pic_side = "left"
-        else:
-            pic_side = "right"
                     
     def draw_connections(self):
         """Method that draws all defined connections onto the base picture"""
@@ -113,7 +111,7 @@ class ConnectionMap:
         main_root = main_svg.getroot()
         main_root.moveto(left_width, 0)
         subpics = [main_root]
-        pointers = []
+        new_elements = []
         for connection in self.connections:
             subpic = connection.connect_pic
             subpic.draw()
@@ -125,8 +123,8 @@ class ConnectionMap:
                 shift_x = left_width + connection.start_point[0] - anchorPos[0]/2
                 shift_y = connection.start_point[1] - anchorPos[1]/2
             else:
-                pic_side = self._determine_pointer_placement(connection, anchor, start_pic_width/2)
-                if pic_side == "left":
+                print("Here")
+                if self._connect_on_left(connection):
                     shift_x = 0
                     shift_y = self.left_shift_y
                     self.left_shift_y += subpic.height
@@ -134,10 +132,12 @@ class ConnectionMap:
                     shift_x = left_width + self.picture.width
                     shift_y = self.right_shift_y
                     self.right_shift_y += subpic.height
-                newStartPoint = (connection.startPoint[0]+left_width, connection.startPoint[1])
+                newStartPoint = (connection.start_point[0]+left_width, connection.start_point[1])
                 endPoint = (anchorPos[0]+shift_x, anchorPos[1]+shift_y)
-                pointers.append(PointerElement(newStartPoint, endPoint, **self.pointer_style))
-
+                new_elements.append(PointerElement(newStartPoint, endPoint, connection.pointer_style))
+                subpic.scale_down_percent(0.95)
+                new_subpic_center = (subpic.width/2+shift_x, subpic.height/2+shift_y)
+                new_elements.append(BorderElement(new_subpic_center, subpic.width, subpic.height))
             subpic_svg = svgutils.fromstring(subpic.getSVG())
             subpic_root = subpic_svg.getroot()
             subpic_root.moveto(shift_x, shift_y)
@@ -145,11 +145,11 @@ class ConnectionMap:
         new_svg = svgutils.SVGFigure("{!s}px".format(self.picture.width), "{!s}px".format(self.picture.height))
         new_svg.append(subpics)
 
-        #Lastly, after composing pioctures, we add pointers if needed
-        pointers_svg_engine = SVGEngine(self.picture.width, self.picture.height)
-        for pointer in pointers:
-            pointer.draw(pointers_svg_engine)
-        pointers_svg = svgutils.fromstring(str(pointers_svg_engine))
-        pointers_root = pointers_svg.getroot()
-        new_svg.append(pointers_root)
+        #Lastly, after composing pioctures, we add pointers, borders, and other new elements if needed
+        elems_svg_engine = SVGEngine(self.picture.width, self.picture.height)
+        for element in new_elements:
+            element.draw(elems_svg_engine)
+        elems_svg = svgutils.fromstring(str(elems_svg_engine))
+        elems_root = elems_svg.getroot()
+        new_svg.append(elems_root)
         self.picture.writeSVG(new_svg.to_str()) #composite SVG saved to the base picture

@@ -91,5 +91,5 @@ class SVGEngine():
 
     def draw_pointer(self, start, end, **kwargs):
         #TODO: implement pointer drawing
-        draw_arrow(start, end, **kwargs)
+        self.draw_arrow(start, end, **kwargs)
 #TODO: pointer start dots, regular polygons, text along a line
