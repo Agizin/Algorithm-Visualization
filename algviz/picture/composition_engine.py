@@ -62,7 +62,6 @@ class CompositionEngine:
             return True
         elif connection.anchor.is_on_left():
             return False #false b/c a left anchor implies we should place on right of main pic
-        print(connection.start_point)
         return connection.start_point[0] <= mid
         
 

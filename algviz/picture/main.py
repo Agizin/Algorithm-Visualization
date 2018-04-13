@@ -1,4 +1,4 @@
-from picture import Picture
+from .picture import Picture
 
 def make_svg(structure, _, settings):
     pic = Picture.make_picture(structure, **settings)

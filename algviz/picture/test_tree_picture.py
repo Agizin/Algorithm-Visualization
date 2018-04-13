@@ -2,6 +2,7 @@ from .picture import *
 import os
 import inspect
 from algviz.parser import structures
+from .main import make_svg
 
 filepath = os.path.abspath(os.path.dirname(__file__))
 test_dir = os.path.join(filepath, "test_output")
@@ -117,6 +118,12 @@ def test_null_children_tree(test_dir, outfile):
     pic.draw()
     pic.save(os.path.join(test_dir, outfile))
 
+def test_main(test_dir, outfile):
+    s = structures.String("Testing main file...", uid=1)
+    svg = make_svg(s, None, {})
+    with open(os.path.join(test_dir, outfile), 'w') as f:
+        f.write(svg)
+
 if __name__ == "__main__":
     if not os.path.exists(test_dir):
         os.makedirs(test_dir)
@@ -129,3 +136,4 @@ if __name__ == "__main__":
     test_nested_tree(test_dir, "07_nested_tree.svg")
     test_pointer_tree(test_dir, "08_pointer_tree.svg")
     test_null_children_tree(test_dir, "09_null_child_tree.svg")
+    test_main(test_dir, "10_test_main.svg")
