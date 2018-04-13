@@ -109,11 +109,11 @@ def test_pointer_tree(test_dir, outfile):
 if __name__ == "__main__":
     if not os.path.exists(test_dir):
         os.makedirs(test_dir)
-    #test_single_char(test_dir, "01_char.svg")
-    #test_long_string(test_dir, "02_string.svg")
-    #test_single_tree_node(test_dir, "03_node.svg")
-    #test_single_node_long_string(test_dir, "04_long_node.svg")
-    #test_simple_tree(test_dir, "05_simple_tree.svg")
-    #test_long_string_tree(test_dir, "06_complex_string_tree.svg")
-    #test_nested_tree(test_dir, "07_nested_tree.svg")
+    test_single_char(test_dir, "01_char.svg")
+    test_long_string(test_dir, "02_string.svg")
+    test_single_tree_node(test_dir, "03_node.svg")
+    test_single_node_long_string(test_dir, "04_long_node.svg")
+    test_simple_tree(test_dir, "05_simple_tree.svg")
+    test_long_string_tree(test_dir, "06_complex_string_tree.svg")
+    test_nested_tree(test_dir, "07_nested_tree.svg")
     test_pointer_tree(test_dir, "08_pointer_tree.svg")

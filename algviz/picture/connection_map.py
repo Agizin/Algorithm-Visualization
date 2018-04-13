@@ -51,12 +51,10 @@ class ConnectionMap:
         if self.picture.width < point[0] or self.picture.height < point[1]:
             raise TypeError("Point not included in picture")
         if pointer:
-            print("POINTER ADDING")
             cxn = ConnectionMap.PointerConnection(point, connect_pic, anchor, pointer_style)
         else:
             cxn = ConnectionMap.Connection(point, connect_pic, anchor)
         self.connections.append(cxn)
-        print("Connections: {}".format(self.connections))
 
     def _connect_on_left(self, connection):
         """Returns True if the (pointer) connection should be placed to the left of main pic.
@@ -123,7 +121,6 @@ class ConnectionMap:
                 shift_x = left_width + connection.start_point[0] - anchorPos[0]/2
                 shift_y = connection.start_point[1] - anchorPos[1]/2
             else:
-                print("Here")
                 if self._connect_on_left(connection):
                     shift_x = 0
                     shift_y = self.left_shift_y

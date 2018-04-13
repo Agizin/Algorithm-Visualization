@@ -65,16 +65,22 @@ class Picture(object, metaclass=abc.ABCMeta):
         self.structure = structure #data structure that this picture represents
         self.width = width #width of the SVG (pixels)
         self.height = height #height of the SVG (pixels)
-        self.svg_str = '' #Contains the contents of the SVG. Note: may be represented as a string or as bytes.
+        self.svg_str = None #Contains the contents of the SVG. Note: may be represented as a string or as bytes.
 
     def __str__(self):
-        return self.svg_str
+        return str(self.svg_str)
 
     def getSVG(self):
+        """Returns svg. Note: may be a string or bytes object"""
         return self.svg_str
 
     def writeSVG(self, svg_string):
-        self.svg_str = svg_string
+        if isinstance(svg_string, str):
+            self.svg_str = svg_string
+        elif isinstance(svg_string, bytes):
+            self.svg_str = svg_string.decode("utf-8")
+        else:
+            raise TypeError("Can only write an SVG as from a string or bytes instance, got {}".format(type(svg_string)))
 
     def save(self, filename):
         """Saves the SVG represented to the given filename."""
@@ -90,7 +96,7 @@ class Picture(object, metaclass=abc.ABCMeta):
             f.write(self.svg_str)
 
     def is_drawn(self):
-        return len(self.svg_str) != 0
+        return self.svg_str is not None
 
     def scale_down(self, new_width, new_height):
         """Scales the picture SVG proportionally to below the given dimensions"""
@@ -98,7 +104,7 @@ class Picture(object, metaclass=abc.ABCMeta):
             self.draw()
         if new_width >= self.width and new_height >= self.height:
             return
-        old_svg = svgutils.fromstring(self.getSVG())
+        old_svg = svgutils.fromstring(str(self))
         old_pic = old_svg.getroot()
         if new_width-self.width <= new_height-self.height:
             scale_factor = new_width/float(self.width)
@@ -114,6 +120,12 @@ class Picture(object, metaclass=abc.ABCMeta):
             new_svg = svgutils.SVGFigure((self.width, self.height))
             new_svg.append([old_pic])
             self.writeSVG(new_svg.to_str())
+
+    def scale_down_percent(self, p):
+        p = float(p)
+        if p <= 0 or p>=1:
+            raise TypeError("{} must be a float greater than zero up to one".format(p))
+        self.scale_down(self.width*p, self.height*p)
 
     def get_anchor_position(self, anchor):
         """When given an anchor (see: anchor.py), returns the position of that anchor on this SVG"""
@@ -142,21 +154,23 @@ class InternalPicture(Picture, metaclass = abc.ABCMeta):
             contains_subpictures=True
             if isinstance(node.data, structures.Pointer):
                 pointerTo = Picture.make_picture(node.data.referent, style=self.style)
-                connections.add_connection(node.center, pointerTo, anchor=anchor.CENTER, pointer=True)
-                node_center_x = node.center[0]
-                picture_center_x = node_data.width/2
+                connections.add_connection(node.center, pointerTo, anchor=Anchor.CENTER, pointer=True, pointer_style=self.pointer_style)
+                """node_center_x = node.center[0]
+                picture_center_x = self.width/2
                 if node_center_x <= picture_center_x: #Node is on left side of picture
                     anchor = Anchor.RIGHT
                 else:
                     anchor = Anchor.LEFT
                 connections.add_connection(node.center, pointerTo, anchor=anchor,
-                                           pointer=True, pointer_style=self.pointer_style)
+                                           pointer=True, pointer_style=self.pointer_style)"""
             else:
                 #If not a pointer, we scale the subpicture fit into node
                 node_data_pic = Picture.make_picture(node.data, style=self.style)
                 node_data_pic.scale_down(node.width, node.height)
-                connections.add_connection(node.center, node_data_pic, anchor=Anchor.BOTTOM,
-                                           pointer=False)
+                anchor = Anchor.BOTTOMRIGHT
+                if isinstance(node_data_pic,StringLeaf):
+                    anchor = Anchor.BOTTOM #Ideally, this should also be anchored bottom right, but its messed up by the difficult of predicting string length in SVG
+                connections.add_connection(node.center, node_data_pic, anchor=anchor, pointer=False)
         if contains_subpictures:
             connections.draw_connections()
     pass            
@@ -241,7 +255,7 @@ class TreePicture(InternalPicture):
         return width
 
     def _determine_height_coef(self, x):
-        """expirementally determined function to provide larger trees with smaller relative heights"""
+        """expirementally determined function to provide larger trees with smaller relative heights. Cuts off some white space at bottom."""
         x = float(x)
         return (x-0.5)/(2*x**2-x+1)+0.65
 
