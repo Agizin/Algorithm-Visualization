@@ -1,6 +1,6 @@
 import unittest
 from . import graphs
-
+import re
 
 class GraphLayoutTestCase(unittest.TestCase):
     def test_layout_graph_nodes(self):
@@ -47,7 +47,7 @@ class GraphLayoutTestCase(unittest.TestCase):
         self.assertIsInstance(coords, dict)
         self.assertEqual(len(nodes), len(coords))
         for node, coord in coords.items():
-            self.assertIsInstance(node, graphs.NodeSpec)
+            self.assertIsInstance(node, graphs._NodeSpec)
             x, y = coord
             self.assertIsInstance(x, (int, float))
             self.assertIsInstance(y, (int, float))
@@ -78,8 +78,13 @@ class GraphLayoutTestCase(unittest.TestCase):
             self.assertIn(edge, edge_to_splines)
             spline = edge_to_splines[edge]
             self.assertIsInstance(spline, graphs.Spline)
-            self.assertIsInstance(spline.to_svg_path(), str)
-        print(G.graph.graph_attr.keys())
+            self._assert_svg_spline_reasonable(spline.to_svg_path())
+
+    def _assert_svg_spline_reasonable(self, svg_spline):
+        self.assertIsInstance(svg_spline, str)
+        self.assertGreater(len(svg_spline), 10)
+        self.assertTrue(re.match("^[A-Za-z0-9\\., ]+$", svg_spline), msg=svg_spline)
+        # TODO ... figure out syntax for splines
 
 if __name__ == "__main__":
     unittest.main()

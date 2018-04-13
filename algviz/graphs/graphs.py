@@ -1,11 +1,12 @@
 from collections import namedtuple
 import pygraphviz as pgv
 import warnings
+import io
 
 from typing import List, Tuple, Dict
 
 
-class NodeSpec():
+class _NodeSpec():
     def __init__(self, width: float, height: float) -> None:
         self.width = width
         self.height = height
@@ -20,13 +21,14 @@ class NodeSpec():
     #     return self.label
 
 
-def node_spec(width: float = .75, height: float = .50) -> NodeSpec:
+def node_spec(width: float = .75, height: float = .50) -> _NodeSpec:
+    """Use this to make nodes"""
     # can extend with keyword arguments if we extend node
     # without breaking existing client code
-    return NodeSpec(width, height)
+    return _NodeSpec(width, height)
 
 
-Edge = Tuple[NodeSpec, NodeSpec]
+Edge = Tuple[_NodeSpec, _NodeSpec]
 Attrs = Dict[str, str]
 Location = Tuple[int, int]
 NodesToLocations = Dict[str, Location]
@@ -49,12 +51,13 @@ class GraphVizSeed:
 
 class GraphVizGraph:
     def __init__(self,
-                 nodes: List[NodeSpec] = None,
+                 nodes: List[_NodeSpec] = None,
                  edges: List[Edge] = None,
                  nodeAttrs: Attrs = None,
                  edgeAttrs: Attrs = None,
                  algo: str="neato",  # only "neato" allows us to pin nodes
                  seed=None,
+                 directed=True,
     ):
         if isinstance(seed, GraphVizSeed):
             self._seed = seed
@@ -64,6 +67,8 @@ class GraphVizGraph:
             self._seed = GraphVizSeed(seed)
         self._node_attrs = nodeAttrs or {}
         self._edge_attrs = edgeAttrs or {}
+        self._edge_attrs.setdefault("minlen", 1)
+        self._edge_attrs.setdefault("len", 1)
         self._init_graph(nodes, edges)
         self.layout(algo)
 
@@ -80,7 +85,7 @@ class GraphVizGraph:
             for edge in edges:
                 self.add_edge(*edge)
 
-    def add_edge(self, src: NodeSpec, dst: NodeSpec):
+    def add_edge(self, src: _NodeSpec, dst: _NodeSpec):
         if src not in self.nodes:
             self.add_node(src)
         if dst not in self.nodes:
@@ -90,7 +95,7 @@ class GraphVizGraph:
                             self._get_node_label(dst),
                             **self._edge_attrs)
 
-    def add_node(self, node: NodeSpec):
+    def add_node(self, node: _NodeSpec):
         if self._get_node_label(node) is not None:
             raise ValueError("new nodes should have None labels")
         self._label_node(node)
@@ -119,7 +124,7 @@ class GraphVizGraph:
     def layout(self, algo: str):
         self.graph.layout(prog=algo)
 
-    def get_node_locations(self) -> Dict[NodeSpec, Tuple[float, float]]:
+    def get_node_locations(self) -> Dict[_NodeSpec, Tuple[float, float]]:
         locations = {}
         def get_position(gv_node):
             return tuple(float(x) for x in gv_node.attr['pos'].split(','))
@@ -128,7 +133,7 @@ class GraphVizGraph:
             locations[self._name_to_node[gv_node.get_name()]] = get_position(gv_node)
         return locations
 
-    def _get_gv_edge(self, edge: Tuple[NodeSpec, NodeSpec]):
+    def _get_gv_edge(self, edge: Tuple[_NodeSpec, _NodeSpec]):
         return self.graph.get_edge(self._get_node_label(edge[0]),
                                    self._get_node_label(edge[1]))
 
@@ -141,7 +146,13 @@ class GraphVizGraph:
             splines[edge] = parse_graphviz_spline(attr['pos'])
         return splines
 
-def layout_graph_nodes(nodes: List[NodeSpec],
+    def get_full_svg(self):
+        with io.BytesIO() as f:
+            f.name = "noname.svg"
+            self.graph.draw(f)
+            return f.getvalue().decode()
+
+def layout_graph_nodes(nodes: List[_NodeSpec],
                        edges: List[Edge],
                        nodeAttrs: Attrs=None,
                        edgeAttrs: Attrs=None,
@@ -154,7 +165,7 @@ def layout_graph_nodes(nodes: List[NodeSpec],
     return GraphVizGraph(nodes, edges, nodeAttrs, edgeAttrs, algo).get_node_locations()
 
 def parse_graphviz_spline(edge_pos):
-    splines = [Spline(s) for s in edge_pos.split(';')]
+    splines = [Spline.from_graphviz(s) for s in edge_pos.split(';')]
     if len(splines) != 1:
         # If we start getting this, we'll need to figure out how to put
         # multiple splines in one SVG path attribute, and we can make another
@@ -167,7 +178,7 @@ Point = namedtuple("Point", ("x", "y"))
 
 
 def point_from_graphviz(graphviz_pt: str):
-    return Point(float(t) for t in graphviz_pt.split(","))
+    return Point(*(float(t) for t in graphviz_pt.split(",")))
 
 # BezierCurve = namedtuple("BezierCurve", ("ctrl0", "ctrl1", "endpoint"))
 
@@ -183,13 +194,15 @@ class BezierCurve:
         self.endpoint = endpoint
 
     def to_svg(self):
-        return "C{} {} {}".format(self.ctrl0, self.ctrl1, self.endpoint)
-
+        return "C" + ", ".join("{} {}".format(*point) for point in
+                               [self.ctrl0, self.ctrl1, self.endpoint])
 
 class Spline():
     def __init__(self, start_pt, *curves, arrow_tips=(None, None)):
         self.start_pt = start_pt
         self.curves = curves
+        if len(self.curves) < 1:
+            raise ValueError("Something's up -- this spline is empty!")
         self.arrow_tips = arrow_tips
 
     def get_arrows(self):
@@ -211,10 +224,12 @@ class Spline():
         if ';' in edge_pos:
             raise ValueError("{} has separators.  Use parse_graphviz_splines"
                              .format(edge_pos))
+        if edge_pos.strip() == "":
+            raise ValueError("Can't make an empty spline")
         # '27,71.831 27,61 27,47.288 27,36.413'
         # return Spline(*(to_point(edge_pos.split(" "))
         startp, endp = None, None
-        pt_strings = edge_pos.split(" ")
+        pt_strings = list(edge_pos.split(" "))
         if "e" in pt_strings[0]:
             endp = point_from_graphviz(pt_strings[0].strip("e,"))
             pt_strings = pt_strings[1:]
@@ -222,7 +237,7 @@ class Spline():
             startp = point_from_graphviz(pt_strings[0].strip("s,"))
             pt_strings = pt_strings[1:]
         beziers = []
-        points = [point_from_graphviz(pt_str for pt_str in pt_strings)]
+        points = [point_from_graphviz(pt_str) for pt_str in pt_strings]
         start_point = points[0]
         for c0, c1, endpt in zip(points[1::3],
                                  points[2::3],
