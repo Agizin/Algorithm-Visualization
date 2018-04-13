@@ -1,5 +1,3 @@
-
-
 from .picture import *
 import os
 import inspect
@@ -101,8 +99,10 @@ def test_pointer_tree(test_dir, outfile):
     e = structures.String("E", uid=9)
     t1 = structures.TreeNode(d, uid=10)
     t2 = structures.TreeNode(e, uid=11)
-    t3 = structures.TreeNode(pointer, [t1,t2], uid=12)
-    pic = TreePicture(t3)
+    pointer2 = structures.Pointer(t2)
+    t3 = structures.TreeNode(pointer2, uid=13)
+    t4 = structures.TreeNode(pointer, [t1,t3], uid=12)
+    pic = TreePicture(t4)
     pic.draw()
     pic.save(os.path.join(test_dir, outfile))
 

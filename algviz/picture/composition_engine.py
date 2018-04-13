@@ -53,7 +53,7 @@ class CompositionEngine:
             cxn = CompositionEngine.Connection(point, connect_pic, anchor)
         self.connections.append(cxn)
 
-    def _connect_on_left(self, connection):
+    def _connect_on_left(self, connection, mid):
         """Returns True if the (pointer) connection should be placed to the left of main pic.
         Otherwise, return false - connection placed on right"""
         if not connection.is_pointer():
@@ -62,7 +62,8 @@ class CompositionEngine:
             return True
         elif connection.anchor.is_on_left():
             return False #false b/c a left anchor implies we should place on right of main pic
-        return connection.start_point[0] <= self.picture.width/2
+        print(connection.start_point)
+        return connection.start_point[0] <= mid
         
 
     def _resize_pic(self):
@@ -83,12 +84,12 @@ class CompositionEngine:
                 continue
             connect_width = connection.connect_pic.width
             connect_height = connection.connect_pic.height
-            if self._connect_on_left(connection):
-                left_width = max(connect_width, left_width)
-                right_height += connect_height
-            else:
+            if self._connect_on_left(connection, self.picture.width/2):
                 left_width = max(connect_width, left_width)
                 left_height += connect_height
+            else:
+                right_width = max(connect_width, right_width)
+                right_height += connect_height
         new_width = left_width + self.picture.width + right_width
         new_height = max(left_height, self.picture.height, right_height)
         self.picture.width = new_width
@@ -118,12 +119,12 @@ class CompositionEngine:
                 shift_x = left_width + connection.start_point[0] - anchorPos[0]/2
                 shift_y = connection.start_point[1] - anchorPos[1]/2
             else:
-                if self._connect_on_left(connection):
+                if self._connect_on_left(connection, start_pic_width/2):
                     shift_x = 0
                     shift_y = self.left_shift_y
                     self.left_shift_y += subpic.height
                 else:
-                    shift_x = left_width + self.picture.width
+                    shift_x = left_width + start_pic_width
                     shift_y = self.right_shift_y
                     self.right_shift_y += subpic.height
                 newStartPoint = (connection.start_point[0]+left_width, connection.start_point[1])

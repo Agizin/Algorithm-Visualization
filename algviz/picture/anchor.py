@@ -16,4 +16,4 @@ class Anchor(Enum):
         return self.value[0] == 0
 
     def is_on_right(self):
-        return self.value[1] == 1
+        return self.value[0] == 1
