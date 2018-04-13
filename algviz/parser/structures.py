@@ -237,8 +237,9 @@ class TreeNode(DataStructure):
             return 1
         height = 0
         for child in self.children:
-            child_height = child.height()
-            height = max(height,child_height)
+            if child is not None:
+                child_height = child.height()
+                height = max(height,child_height)
         return height + 1
 
     def untablify(self, obj_table):

@@ -8,7 +8,7 @@ from math import floor
 from algviz.parser import structures
 from .elements import *
 from .anchor import Anchor
-from .connection_map import ConnectionMap
+from .composition_engine import CompositionEngine
 from .svg_engine import DEFAULTS, SVGEngine
 
 assert(sys.version_info >= (3,6))
@@ -34,7 +34,7 @@ class Picture(object, metaclass=abc.ABCMeta):
     def make_picture(structure, *args, **kwargs):
         """Selects a picture class for the given structure. 
         Use this method to create a picture class of an unknown structure"""
-        #TODO: add rules for slecting between picture classes that have same structure type.
+        #TODO: add rules for selecting between picture classes that have same structure type.
         if not isinstance(structure, structures.DataStructure):
             raise DataStructureException("Expected structure to be instance of DataStructure, got {}"
                                          .format(type(structure)))
@@ -124,7 +124,7 @@ class Picture(object, metaclass=abc.ABCMeta):
     def scale_down_percent(self, p):
         p = float(p)
         if p <= 0 or p>=1:
-            raise TypeError("{} must be a float greater than zero up to one".format(p))
+            raise ValueError("{} must be a float greater than zero up to one".format(p))
         self.scale_down(self.width*p, self.height*p)
 
     def get_anchor_position(self, anchor):
@@ -144,9 +144,9 @@ class InternalPicture(Picture, metaclass = abc.ABCMeta):
     def _node_generator(self):
         pass
     
-    def _draw_node_data(self):
+    def _draw_node_data(self, pointer_anchor=Anchor.CENTER):
         """Draws/Connects subpictures to the current picture"""
-        connections = ConnectionMap(self)
+        connections = CompositionEngine(self) #Object used to compose subpictuctures into a single SVG.
         contains_subpictures = False
         for node in self._node_generator():
             if node.data is None:
@@ -154,15 +154,7 @@ class InternalPicture(Picture, metaclass = abc.ABCMeta):
             contains_subpictures=True
             if isinstance(node.data, structures.Pointer):
                 pointerTo = Picture.make_picture(node.data.referent, style=self.style)
-                connections.add_connection(node.center, pointerTo, anchor=Anchor.CENTER, pointer=True, pointer_style=self.pointer_style)
-                """node_center_x = node.center[0]
-                picture_center_x = self.width/2
-                if node_center_x <= picture_center_x: #Node is on left side of picture
-                    anchor = Anchor.RIGHT
-                else:
-                    anchor = Anchor.LEFT
-                connections.add_connection(node.center, pointerTo, anchor=anchor,
-                                           pointer=True, pointer_style=self.pointer_style)"""
+                connections.add_connection(node.center, pointerTo, anchor=pointer_anchor, pointer=True, pointer_style=self.pointer_style)
             else:
                 #If not a pointer, we scale the subpicture fit into node
                 node_data_pic = Picture.make_picture(node.data, style=self.style)
@@ -246,6 +238,8 @@ class TreePicture(InternalPicture):
         super().__init__(tree_root, width, height)
 
     def _width_estimate(self, root):
+        if root is None:
+            return 0
         if root.is_leaf():
             return 2*self.node_width+self.node_sep
         width = 0
@@ -261,10 +255,11 @@ class TreePicture(InternalPicture):
 
     def _height_estimate(self, root):
         #TODO: improve height heuristic for tall trees.
+        if root is None:
+            return 0
         tree_height = root.height()
         c = self._determine_height_coef(tree_height)
         return c*tree_height*(2*self.node_width+self.edge_length) - self.edge_length
-    
             
     def _layout_nodes(self, parent, level_roots):
         sub_widths = []
@@ -284,8 +279,6 @@ class TreePicture(InternalPicture):
         far_x_bound = parent.center[0] - level_length/2
         for i in range(0, len(level_roots)):
             subtree = level_roots[i]
-            if subtree is None:
-                continue
             sub_width = sub_widths[i]
             x = far_x_bound + sub_width/2
             far_x_bound += sub_width

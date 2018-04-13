@@ -1,4 +1,5 @@
 
+
 from .picture import *
 import os
 import inspect
@@ -104,7 +105,17 @@ def test_pointer_tree(test_dir, outfile):
     pic = TreePicture(t3)
     pic.draw()
     pic.save(os.path.join(test_dir, outfile))
-    
+
+def test_null_children_tree(test_dir, outfile):
+    a = structures.String("a", uid=1)
+    b = structures.String("b", uid=2)
+    c = structures.String("c", uid=3)
+    t1 = structures.TreeNode(b, uid=4)
+    t2 = structures.TreeNode(c, uid=5)
+    t3 = structures.TreeNode(a, [t1, None, t2], uid=6)
+    pic = TreePicture(t3)
+    pic.draw()
+    pic.save(os.path.join(test_dir, outfile))
 
 if __name__ == "__main__":
     if not os.path.exists(test_dir):
@@ -117,3 +128,4 @@ if __name__ == "__main__":
     test_long_string_tree(test_dir, "06_complex_string_tree.svg")
     test_nested_tree(test_dir, "07_nested_tree.svg")
     test_pointer_tree(test_dir, "08_pointer_tree.svg")
+    test_null_children_tree(test_dir, "09_null_child_tree.svg")

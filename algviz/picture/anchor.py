@@ -1,7 +1,7 @@
 from enum import Enum
 
 class Anchor(Enum):
-    """Relative Positions on Picture"""
+    """Identifies points of relative positions on Picture"""
     TOPLEFT = (0,0)
     TOP = (0.5, 0)
     TOPRIGHT = (1,0)
@@ -13,7 +13,7 @@ class Anchor(Enum):
     BOTTOMRIGHT = (1,1)
 
     def is_on_left(self):
-        return (self is Anchor.TOPLEFT) or (self is Anchor.LEFT) or (self is Anchor.BOTTOMLEFT)
+        return self.value[0] == 0
 
     def is_on_right(self):
-        return (self is Anchor.TOPRIGHT) or (self is Anchor.RIGHT) or (self is Anchor.BOTTOMLEFT)
+        return self.value[1] == 1

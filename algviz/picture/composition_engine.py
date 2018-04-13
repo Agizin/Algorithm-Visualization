@@ -5,17 +5,17 @@ from .anchor import Anchor
 from .svg_engine import SVGEngine
 from .elements import PointerElement, BorderElement
 
-"""This is what combines composes pictures into a single SVG.
+"""This is what composes pictures into a single SVG.
 
 This class is given a base picture and a series of subpictures. Each subpicture is
 connected to the base picture at a specific point, which I called the start point for
 the connection. An anchor element from anchor.py defines the point that the subpicture 
-is placed at the connection point. This information is contained in the Connection class.
-The Connection Map class holds this connection information and has methods to compose the
+is placed at, called the connection point. This information is contained in the Connection class.
+The Composition Engine class holds this connection information and has methods to compose the
 base picture and subpictures into a single SVG, which is then made a property of the base
 picture."""
 
-class ConnectionMap:
+class CompositionEngine:
     class Connection:
         """Default connection: the subpicture is placed directly on the
             base picture at the connection point."""
@@ -28,7 +28,7 @@ class ConnectionMap:
             self.anchor = anchor
 
         def is_pointer(self):
-            return False
+            return isinstance(self, CompositionEngine.PointerConnection)
 
     class PointerConnection(Connection):
         """Pointer connections are placed outside the base picture. The start point
@@ -37,9 +37,6 @@ class ConnectionMap:
         def __init__(self, start_point, connect_pic, anchor, pointer_style={}):
             self.pointer_style = pointer_style
             super().__init__(start_point, connect_pic, anchor)
-
-        def is_pointer(self):
-            return True
     
     def __init__(self, startPicture):
         self.connections = []
@@ -49,11 +46,11 @@ class ConnectionMap:
         
     def add_connection(self, point, connect_pic, anchor=None, pointer=True, pointer_style={}):
         if self.picture.width < point[0] or self.picture.height < point[1]:
-            raise TypeError("Point not included in picture")
+            raise ValueError("Point not included in picture")
         if pointer:
-            cxn = ConnectionMap.PointerConnection(point, connect_pic, anchor, pointer_style)
+            cxn = CompositionEngine.PointerConnection(point, connect_pic, anchor, pointer_style)
         else:
-            cxn = ConnectionMap.Connection(point, connect_pic, anchor)
+            cxn = CompositionEngine.Connection(point, connect_pic, anchor)
         self.connections.append(cxn)
 
     def _connect_on_left(self, connection):
