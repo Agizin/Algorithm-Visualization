@@ -18,9 +18,11 @@ def main():
                         help="uid of object to be drawn")
     parser.add_argument("--var", "-r", default=None, type=str,
                         help="var name of object to be drawn.  Takes precedence over UID.")
+    parser.add_argument("--module", "-m", default="recursive", type=str,
+                        help="algviz submodule to create the drawing")
     args = parser.parse_args()
     snapshots = json_objects.read(args.infile)
-    config = {"module": "recursive"}
+    config = {"module": args.module}
     if args.var is not None:
         config[pic_main._keys.var] = args.var
     else:

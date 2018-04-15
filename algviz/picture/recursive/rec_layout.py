@@ -5,6 +5,8 @@ import math
 from . import elements, anchors
 from .anchors import Anchor, Coord
 
+from algviz.parser import structures
+
 class LayoutOperationError(Exception):
     pass
 
@@ -39,12 +41,13 @@ class AbstractLayout(object):
     def is_in_layout(self, obj):
         return obj in self._ptr_targets
 
-    def make_child(self, obj, layout_cls=None):
+    def make_child(self, obj, layout_cls=None, **subclass_kwargs):
         if layout_cls is None:
             layout_cls = self._choose_child_cls(obj)  # choose a picture class
         return layout_cls(obj, svg_hint=self.svg_hint,
                           choose_child_cls=self._choose_child_cls,
-                          ptr_targets=self._ptr_targets)
+                          ptr_targets=self._ptr_targets,
+                          **subclass_kwargs)
 
     def add_rect_element(self, rect_element, coord, anchor=Anchor.top_left, represents=None):
         """anchor must be a member of the `Anchor` enum"""
@@ -197,15 +200,24 @@ class NodeLayout(AbstractLayout):
 
 class SimpleTreeLayout(AbstractLayout):
 
-    def __init__(self, root, **kwargs):
+    def __init__(self, root, parent=None, **kwargs):
         super().__init__(**kwargs)
+        if root == structures.Null:
+            if parent is None:
+                raise LayoutOperationError("SimpleTreeLayout fails if root of tree is Null")
+            self.root_picture = None
+            self.finalize(parent.root_picture.width,
+                          parent.root_picture.height)
+            return
         self.root_picture = self.make_child(root, layout_cls=NodeLayout)
         if root.is_leaf():
             self.add_child(self.root_picture, Coord(0, 0))
             self.finalize(self.root_picture.width,
                           self.root_picture.height)
+            return
         else:
-            child_pictures = [self.make_child(child, layout_cls=SimpleTreeLayout)
+            child_pictures = [self.make_child(child, parent=self,
+                                              layout_cls=SimpleTreeLayout)
                               for child in root.children]
             horiz_margin = self.svg_hint.margin  # horizontal space between children
             children_width = (sum(child.width for child in child_pictures)
@@ -216,16 +228,16 @@ class SimpleTreeLayout(AbstractLayout):
             child_y = self.root_picture.height + 3 * self.svg_hint.margin
             for child in child_pictures:
                 self.add_child(child, Coord(next_child_x, child_y), anchor=Anchor.top_left)
-                self.add_decoration(elements.StraightArrow(
-                    self.root_picture.node_element,
-                    child.root_picture.node_element,
-                    orig_anchor=anchors.Anchor.bottom,
-                    dest_anchor=anchors.Anchor.top,
-                ))
+                if child.root_picture is not None:
+                    self.add_decoration(elements.StraightArrow(
+                        self.root_picture.node_element,
+                        child.root_picture.node_element,
+                        orig_anchor=anchors.Anchor.bottom,
+                        dest_anchor=anchors.Anchor.top,
+                    ))
                 next_child_x += child.width + horiz_margin
             height = child_y + max(child.height for child in child_pictures)
             self.finalize(width=width, height=height)
-
 
 class StupidArrayLayout(AbstractLayout):
     def __init__(self, array, **kwargs):

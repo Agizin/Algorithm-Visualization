@@ -9,7 +9,7 @@
          "children": ["mycalltreeLL", "mycalltreeLR"]},
         {"uid": "mycalltreeLL", "type": "treenode", "data": {"type": "ptr", "data": "s1"}},
         {"uid": "mycalltreeLR", "type": "treenode", "data": {"type": "ptr", "data": "s0"}},
-        {"uid": "mycalltreeR", "type": "treenode", "data": {"type": "string", "data": "poodles", "uid": "s2"}, "children": ["mycalltreeRL", "mycalltreeRR"]},
+        {"uid": "mycalltreeR", "type": "treenode", "data": {"type": "string", "data": "poodles", "uid": "s2"}, "children": ["mycalltreeRL", "mycalltreeRR", "#null"]},
         {"uid": "mycalltreeRL", "type": "treenode", "data": {"type": "ptr", "data": "s2"}},
         {"uid": "mycalltreeRR", "type": "treenode", "data": {"type": "string", "data": "wakalixes"}, "children": ["mycalltreeRRL", "mycalltreeRRR"]},
         {"uid": "mycalltreeRRL", "type": "treenode", "data": {"type": "string", "data": "zoo"}},

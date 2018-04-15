@@ -1,0 +1,12 @@
+[
+    [
+        {"uid": "root", "type": "tree", "children": ["L", "R"], "data": 10},
+        {"uid": "L", "type": "tree", "children": ["LL", "LR"], "data": 5},
+        {"uid": "R", "type": "tree", "children": ["RL", "#null"], "data": 15},
+        {"uid": "LL", "type": "tree", "children": ["#null", "LLR"], "data": 2},
+        {"uid": "LR", "type": "tree", "children": ["#null", "LRR"], "data": 7},
+        {"uid": "LLR", "type": "tree", "children": [], "data": 3},
+        {"uid": "LRR", "type": "tree", "children": [], "data": 8},
+        {"uid": "RL", "type": "tree", "children": [], "data": 12}
+    ]
+]

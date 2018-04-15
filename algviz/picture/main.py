@@ -1,11 +1,15 @@
 from algviz.parser.json_objects import Tokens
 from .recursive import main as recursive_main
+from .fabulous import main as fabulous_main
 
 class InvalidUserConfigError(Exception):
     pass
 
 module_options = {
+    "fabulous": fabulous_main,
+    "fab": fabulous_main,
     "recursive": recursive_main,
+    "rec": recursive_main,
 }
 
 class _keys:
@@ -54,7 +58,7 @@ def _choose_object_from_snapshot(snapshot, user_config):
 
 def _choose_module(snapshots, user_config):
     if _keys.module not in user_config:
-        return recursive_main  # currently the only option anyway
+        return recursive_main  # default only because it can handle arrays without crashing
     if user_config[_keys.module] not in module_options:
         _bad_for_key(_keys.module, user_config[_keys.module], module_options.keys())
     return module_options[user_config[_keys.module]]
