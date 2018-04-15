@@ -114,11 +114,23 @@ class DefaultNullDrawer(NullDrawer):
 class NodeElementDrawer(RectangularElementDrawer):
     pass
 
-class ShadedBoxNodeElementDrawer(NodeElementDrawer):
+class EllipseNodeElementDrawer(RectangularElementDrawer):
+    def draw_at(self, node_elt, top_left, svg_doc):
+        svg_doc.add(svg_doc.ellipse(
+            center=anchors.from_top_left_corner(node_elt, top_left,
+                                                anchors.Anchor.center),
+            r=(node_elt.width / 2, node_elt.height / 1.8),
+            stroke="black",
+            stroke_width="1",
+            fill_opacity="0.10"))
+
+class BoxNodeElementDrawer(NodeElementDrawer):
     def draw_at(self, node_elt, top_left, svg_doc):
         svg_doc.add(svg_doc.rect(insert=top_left,
                                  size=(node_elt.width, node_elt.height),
-                                 fill_opacity="0.20"))
+                                 stroke="black",
+                                 stroke_width="1",
+                                 fill_opacity="0.10"))
 
 class PointerElementDrawer(RectangularElementDrawer, PointerHint):
     pass
@@ -187,7 +199,7 @@ class FullDrawer:
 
     def __init__(self, delegates, margin=7):
         """Pass a dictionary mapping Element subclasses to ElementDrawer subclasses"""
-        delegates.setdefault(elements.NodeElement, ShadedBoxNodeElementDrawer())
+        delegates.setdefault(elements.NodeElement, BoxNodeElementDrawer())
         delegates.setdefault(elements.StringElement, DefaultStringDrawer())
         delegates.setdefault(elements.PointerSource, DefaultPointerElementDrawer())
         delegates.setdefault(elements.NullElement, DefaultNullDrawer())
