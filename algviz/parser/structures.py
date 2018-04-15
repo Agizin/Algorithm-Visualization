@@ -94,6 +94,9 @@ class Pointer(DataStructure):
     def untablify(self, obj_table):
         self.referent = obj_table[self.referent]
 
+    def __hash__(self):
+        return super().__hash__()
+
 class Array(collections.UserList, DataStructure):
     """An array data structure"""
     def __init__(self, *args, **kwargs):
@@ -108,6 +111,9 @@ class Array(collections.UserList, DataStructure):
         return (isinstance(other, Array) and
                 DataStructure.__eq__(self, other) and
                 collections.UserList.__eq__(self, other))
+
+    def __hash__(self):
+        return DataStructure.__hash__(self)
 
 class _Singleton(abc.ABCMeta):
     # Embarassingly copied from https://stackoverflow.com/questions/6760685
@@ -135,7 +141,8 @@ class NullType(DataStructure, metaclass=_Singleton):
 Null = NullType()
 
 class LinkedListNode(DataStructure):
-    def __init__(self, value, successor=Null):
+    def __init__(self, value, successor=Null, **kwargs):
+        super().__init__(**kwargs)
         self.value = value
         self.successor = successor
 
@@ -158,6 +165,9 @@ class Graph(DataStructure):
                 super().__eq__(other) and
                 self.nodes == other.nodes and
                 self.edges == other.edges)
+
+    def __hash__(self):
+        return super().__hash__()
 
 class Node(DataStructure):
     # This is a minimal node that isn't responsible for its own edges.  This
@@ -209,6 +219,9 @@ class Widget(DataStructure):
 
     def untablify(self, obj_table):
         pass
+
+    def __hash__(self):
+        return super().__hash__()
 
 class TreeNode(DataStructure):
     """A node with some number of children in a fixed order.  Edges are implicit."""
@@ -268,3 +281,6 @@ class String(collections.UserString, DataStructure):
         return (isinstance(other, String) and
                 DataStructure.__eq__(self, other) and
                 collections.UserString.__eq__(self, other))
+
+    def __hash__(self):
+        return DataStructure.__hash__(self)
