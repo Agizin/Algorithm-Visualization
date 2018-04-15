@@ -1,7 +1,7 @@
 import sys
 
 from algviz.parser import json_objects
-from algviz.picture import picture
+from algviz.picture.fabulous import picture
 
 def make_picture_from_json(json_file, object_uid, outfile):
     json_contents = None
