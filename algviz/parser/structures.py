@@ -221,7 +221,8 @@ class TreeNode(DataStructure):
         self.children = [] if children is None else children
 
     def is_leaf(self):
-        return len(self.children) == 0
+        return (len(self.children) == 0 or
+                all(child is None for child in self.children))
         
     def width(self):
         if self.is_leaf():
