@@ -123,13 +123,13 @@ class CompositionEngine:
                     shift_y = self.left_shift_y
                     self.left_shift_y += subpic.height
                 else:
-                    shift_x = left_width + start_pic_width
+                    shift_x = 0.95*(left_width + start_pic_width) #coefficient becasue to decrease unintentional shift right from margins
                     shift_y = self.right_shift_y
                     self.right_shift_y += subpic.height
                 newStartPoint = (connection.start_point[0]+left_width, connection.start_point[1])
                 endPoint = (anchorPos[0]+shift_x, anchorPos[1]+shift_y)
                 new_elements.append(PointerElement(newStartPoint, endPoint, connection.pointer_style))
-                subpic.scale_down_percent(0.95)
+                subpic.scale_down_percent(0.9)
                 new_subpic_center = (subpic.width/2+shift_x, subpic.height/2+shift_y)
                 new_elements.append(BorderElement(new_subpic_center, subpic.width, subpic.height))
             subpic_svg = svgutils.fromstring(subpic.getSVG())

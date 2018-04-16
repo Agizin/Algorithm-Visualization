@@ -1,8 +1,8 @@
-from .picture import *
+from algviz.picture.fabulous.picture import *
 import os
 import inspect
 from algviz.parser import structures
-from .main import make_svg
+from algviz.picture.fabulous.main import make_svg
 
 filepath = os.path.abspath(os.path.dirname(__file__))
 test_dir = os.path.join(filepath, "test_output")
