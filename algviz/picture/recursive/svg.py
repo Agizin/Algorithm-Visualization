@@ -17,6 +17,17 @@ class MarginHint(metaclass=abc.ABCMeta):
         """A standard minimum distance between adjacent elements in a layout"""
         # This is sort of a careless approach, honestly
 
+class ArrayFrameHint(metaclass=abc.ABCMeta):
+    @property
+    @abc.abstractmethod
+    def array_border_margin(self):
+        """Amount of space to leave clear around the border of an array"""
+
+    @property
+    @abc.abstractmethod
+    def array_cell_sep(self):
+        """Amount of space to leave between adjacent cells of an array"""
+
 class PointerHint(metaclass=abc.ABCMeta):
     @property
     @abc.abstractmethod
@@ -34,15 +45,17 @@ class SVGHint(
         MarginHint,
         PointerHint,
         NullHint,
+        ArrayFrameHint,
 ):
     """In order to create a Layout, it's useful to know what size the components of the picture should be."""
     
 class DelegatingSVGHint(SVGHint):
-    def __init__(self, str_hint, ptr_hint, null_hint, margin):
+    def __init__(self, str_hint, ptr_hint, null_hint, array_frame_hint, margin):
         self.str_hint = str_hint
         self.ptr_hint = ptr_hint
         self._margin = margin
         self.null_hint = null_hint
+        self.array_frame_hint = array_frame_hint
 
     @property
     def margin(self):
@@ -58,6 +71,14 @@ class DelegatingSVGHint(SVGHint):
     @property
     def null_size(self):
         return self.null_hint.null_size
+
+    @property
+    def array_cell_sep(self):
+        return self.array_frame_hint.array_cell_sep
+
+    @property
+    def array_border_margin(self):
+        return self.array_frame_hint.array_border_margin
 
 class ElementDrawer(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -95,6 +116,51 @@ class DefaultStringDrawer(StringDrawer):
 class NullDrawer(RectangularElementDrawer, NullHint):
     pass
 
+class ArrayFrameDrawer(RectangularElementDrawer, ArrayFrameHint):
+    pass
+
+class BlackBorderArrayFrameDrawer(ArrayFrameDrawer):
+
+    def __init__(self, stroke_width=2, stroke_color="black"):
+        self.stroke_width = stroke_width
+        self.stroke_color = stroke_color
+
+    @property
+    def array_border_margin(self):
+        return self.stroke_width * 3
+
+    @property
+    def array_cell_sep(self):
+        return self.array_border_margin
+
+    def _add_shape(self, factory, points, svg_doc):
+        shape = factory(points=points)
+        shape.stroke(width=self.stroke_width,
+                     color=self.stroke_color)
+        shape.fill(color="none")
+        svg_doc.add(shape)
+
+    def draw_at(self, frame, top_left, svg_doc):
+        _A = anchors.Anchor
+        # todo -- offset these points by half of stroke width
+        corners = [tuple(anchors.from_top_left_corner(frame, top_left, anch))
+                   for anch in [_A.top_left, _A.top_right,
+                                _A.bottom_right, _A.bottom_left]]
+        self._add_shape(svg_doc.polygon, corners, svg_doc)
+
+        for i in range(1, frame.num_cols):
+            x_coord = i * (frame.width - self.stroke_width) / frame.num_cols + top_left[0]
+            self._add_shape(svg_doc.polyline,
+                            [(x_coord, top_left[1]),
+                             (x_coord, top_left[1] + frame.height)],
+                            svg_doc)
+        for i in range(1, frame.num_rows):
+            y_coord = i * (frame.height - self.stroke_width) / frame.num_rows + top_left[1]
+            self._add_shape(svg_doc.polyline,
+                            [(top_left[0], y_coord),
+                             (top_left[0] + frame.width, y_coord)],
+                            svg_doc)
+
 class DefaultNullDrawer(NullDrawer):
     def __init__(self, null_size=(6, 8)):
         self._null_size = null_size
@@ -131,6 +197,10 @@ class BoxNodeElementDrawer(NodeElementDrawer):
                                  stroke="black",
                                  stroke_width="1",
                                  fill_opacity="0.10"))
+
+class InvisibleNodeElementDrawer(NodeElementDrawer):
+    def draw_at(self, node, top_left, svg_doc):
+        pass
 
 class PointerElementDrawer(RectangularElementDrawer, PointerHint):
     pass
@@ -199,13 +269,14 @@ class FullDrawer:
 
     def __init__(self, delegates, margin=7):
         """Pass a dictionary mapping Element subclasses to ElementDrawer subclasses"""
-        delegates.setdefault(elements.NodeElement, BoxNodeElementDrawer())
+        delegates.setdefault(elements.NodeElement, BoxNodeElementDrawer()) #  InvisibleNodeElementDrawer())
         delegates.setdefault(elements.StringElement, DefaultStringDrawer())
         delegates.setdefault(elements.PointerSource, DefaultPointerElementDrawer())
         delegates.setdefault(elements.NullElement, DefaultNullDrawer())
         delegates.setdefault(elements.Arrow, StraightArrowElementDrawer())
         delegates.setdefault(elements.SplineArrow, StraightArrowElementDrawer())
         delegates.setdefault(elements.StraightArrow, delegates[elements.Arrow])
+        delegates.setdefault(elements.ArrayFrame, BlackBorderArrayFrameDrawer())
         self._delegates = delegates
         self._margin = margin
         self._pending_arrows = collections.defaultdict(set)
@@ -250,14 +321,13 @@ class FullDrawer:
         for arrow in list(self._pending_arrows[new_elt]):
             self._pending_arrows[new_elt].discard(arrow)
             self._draw_element(arrow)
-            # if arrow.origin in self._locations and arrow.destination in self._locations:
-            #     self._draw_element(arrow)
 
     def _make_hint(self):
         return DelegatingSVGHint(
             str_hint=self._delegates[elements.StringElement],
             ptr_hint=self._delegates[elements.PointerSource],
             null_hint=self._delegates[elements.NullElement],
+            array_frame_hint=self._delegates[elements.ArrayFrame],
             margin=self._margin)
 
 def default_full_drawer():

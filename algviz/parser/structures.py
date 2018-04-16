@@ -270,8 +270,8 @@ class TreeNode(DataStructure):
 
 class String(collections.UserString, DataStructure):
 
-    def __init__(self, *args, **kwargs):
-        collections.UserString.__init__(self, *args)
+    def __init__(self, value, **kwargs):
+        collections.UserString.__init__(self, value)
         DataStructure.__init__(self, **kwargs)
 
     def untablify(self, obj_table):

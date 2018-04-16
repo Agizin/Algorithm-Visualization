@@ -10,7 +10,7 @@ _default_mapping = {
     int: rec_layout.StringReprLayout,
     float: rec_layout.StringReprLayout,
     str: rec_layout.StringLayout,
-    structures.Array: rec_layout.StupidArrayLayout,
+    structures.Array: rec_layout.SimpleArrayLayout,
     structures.Graph: rec_layout.CircularGraphLayout,
     structures.Node: rec_layout.NodeLayout,
     structures.NullType: rec_layout.NullLayout,

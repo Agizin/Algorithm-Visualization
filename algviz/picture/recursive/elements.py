@@ -45,6 +45,12 @@ class StringElement(RectangularElement):
         self.text = text
         super().__init__(width, height, **kwargs)
 
+class ArrayFrame(RectangularElement):
+    def __init__(self, width, height, num_cols, num_rows, **kwargs):
+        super().__init__(width, height, **kwargs)
+        self.num_rows = num_rows
+        self.num_cols = num_cols
+
 class Decoration(PictureElement):
     """Stuff that gets tacked on but doesn't take up space"""
     pass

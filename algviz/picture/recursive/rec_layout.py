@@ -239,23 +239,31 @@ class SimpleTreeLayout(AbstractLayout):
             height = child_y + max(child.height for child in child_pictures)
             self.finalize(width=width, height=height)
 
-class StupidArrayLayout(AbstractLayout):
+class SimpleArrayLayout(AbstractLayout):
     def __init__(self, array, **kwargs):
         super().__init__(**kwargs)
-        if array:
-            self.data_pic = self.make_child(array[0])
-        else:
-            self.data_pic = self.make_child("")  # TODO fix this base case or don't use recursion
-        width = self.data_pic.width
-        height = self.data_pic.height
-        if len(array) > 1:
-            self.tail_pic = StupidArrayLayout(array[1:], **kwargs)
-            width += self.svg_hint.margin
-            height = max(height, self.data_pic.height)
-            self.add_child(self.tail_pic, Coord(width, height / 2), anchor=Anchor.left)
-            width += self.tail_pic.width
-        self.add_child(self.data_pic, Coord(0, height / 2), anchor=Anchor.left)
-        self.finalize(width, height, Coord(0, 0))
+        self.data_layouts = [self.make_child(elt) for elt in array]
+        cell_width = (self.svg_hint.array_cell_sep +
+                      max((lyt.width for lyt in self.data_layouts), default=0))
+        total_height = (2 * self.svg_hint.array_border_margin +
+                       max((lyt.height for lyt in self.data_layouts), default=0))
+        next_x = self.svg_hint.array_border_margin
+        for lyt in self.data_layouts:
+            self.add_child(lyt, Coord(next_x + (cell_width -
+                                                self.svg_hint.array_cell_sep) / 2,
+                                      total_height / 2),
+                           anchor=Anchor.center)
+            next_x += cell_width
+        total_width = (next_x + self.svg_hint.array_border_margin
+                       - self.svg_hint.array_cell_sep)
+        self.add_rect_element(
+            elements.ArrayFrame(width=total_width, height=total_height,
+                                num_rows=1, num_cols=len(self.data_layouts)),
+            Coord(0, 0),
+            represents=array)
+                              
+        self.finalize(width=total_width, height=total_height,
+                      ref_point=Coord(0, 0))
 
 class CompositeLayout(AbstractLayout):
 
