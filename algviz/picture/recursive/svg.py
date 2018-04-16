@@ -121,13 +121,13 @@ class ArrayFrameDrawer(RectangularElementDrawer, ArrayFrameHint):
 
 class BlackBorderArrayFrameDrawer(ArrayFrameDrawer):
 
-    def __init__(self, stroke_width=2, stroke_color="black"):
+    def __init__(self, stroke_width=1.5, stroke_color="black"):
         self.stroke_width = stroke_width
         self.stroke_color = stroke_color
 
     @property
     def array_border_margin(self):
-        return self.stroke_width * 3
+        return self.stroke_width * 4
 
     @property
     def array_cell_sep(self):
@@ -149,7 +149,7 @@ class BlackBorderArrayFrameDrawer(ArrayFrameDrawer):
         self._add_shape(svg_doc.polygon, corners, svg_doc)
 
         for i in range(1, frame.num_cols):
-            x_coord = i * (frame.width - self.stroke_width) / frame.num_cols + top_left[0]
+            x_coord = i * (frame.width - self.array_border_margin) / frame.num_cols + top_left[0] + self.array_border_margin / 2
             self._add_shape(svg_doc.polyline,
                             [(x_coord, top_left[1]),
                              (x_coord, top_left[1] + frame.height)],
@@ -185,7 +185,7 @@ class EllipseNodeElementDrawer(RectangularElementDrawer):
         svg_doc.add(svg_doc.ellipse(
             center=anchors.from_top_left_corner(node_elt, top_left,
                                                 anchors.Anchor.center),
-            r=(node_elt.width / 2, node_elt.height / 1.8),
+            r=(node_elt.width / 2, node_elt.height / 2),
             stroke="black",
             stroke_width="1",
             fill_opacity="0.10"))
@@ -269,7 +269,7 @@ class FullDrawer:
 
     def __init__(self, delegates, margin=7):
         """Pass a dictionary mapping Element subclasses to ElementDrawer subclasses"""
-        delegates.setdefault(elements.NodeElement, BoxNodeElementDrawer()) #  InvisibleNodeElementDrawer())
+        delegates.setdefault(elements.NodeElement, BoxNodeElementDrawer())
         delegates.setdefault(elements.StringElement, DefaultStringDrawer())
         delegates.setdefault(elements.PointerSource, DefaultPointerElementDrawer())
         delegates.setdefault(elements.NullElement, DefaultNullDrawer())
@@ -287,7 +287,7 @@ class FullDrawer:
     def layout_to_svg(self, layout):
         self._pending_arrows.clear()
         self._locations.clear()
-        self._svg_doc = svgwrite.Drawing()
+        self._svg_doc = svgwrite.Drawing(size=(layout.width, layout.height))
         for elem in layout.elements():
             if isinstance(elem, tuple):
                 coord, elem = elem

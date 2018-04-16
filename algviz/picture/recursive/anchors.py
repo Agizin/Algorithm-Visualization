@@ -31,18 +31,14 @@ class Anchor(enum.Enum):
 
 Coord = namedtuple("Coord", ("x", "y"))
 
+PseudoAnchor = namedtuple("PseudoAnchor", ("x", "y"))
+
 def top_left_corner(rectangle, coord, anchor):
-    if not isinstance(anchor, Anchor):
+    if not isinstance(anchor, (Anchor, PseudoAnchor)):
         # (Members of an Enum are also instances of that Enum.)
         raise TypeError("{} is not an anchor.  Use an element of {}".format(anchor, Anchor))
     def fix_one_dimension(given, anchor_val, side_length):
-        # TODO make this robust, so any `0 <= anchor_val <= 1` works
-        if anchor_val is _LOW:
-            return given
-        elif anchor_val is _HIGH:
-            return given - side_length
-        else:
-            return given - side_length / 2
+        return given + side_length / (_HIGH - _LOW) * (_LOW - anchor_val)
 
     x, y = coord
     x_anch, y_anch = anchor.value
