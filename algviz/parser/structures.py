@@ -40,6 +40,7 @@ ObjectTableReference = collections.namedtuple("ObjectTableReference", ("uid",))
 Snapshot = collections.namedtuple("Snapshot", ("names", "obj_table"))
 
 class DataStructure(metaclass=abc.ABCMeta):
+
     def __init__(self, uid=None, metadata=None):
         self.uid = uid
         if metadata is not None:
@@ -213,10 +214,34 @@ class TreeNode(DataStructure):
     """A node with some number of children in a fixed order.  Edges are implicit."""
     # A common superclass could be used for linked-list nodes, since linked
     # lists are just skinny trees
+
     def __init__(self, data, children=None, **kwargs):
         super().__init__(**kwargs)
         self.data = data
         self.children = [] if children is None else children
+
+    def is_leaf(self):
+        return (len(self.children) == 0 or
+                all(child is None for child in self.children))
+        
+    def width(self):
+        if self.is_leaf():
+            return 1
+        width = max(len(self.children),1)
+        for child in self.children:
+            child_width = child.width()
+            width = max(width, child_width)
+        return width
+
+    def height(self):
+        if self.is_leaf():
+            return 1
+        height = 0
+        for child in self.children:
+            if child is not None:
+                child_height = child.height()
+                height = max(height,child_height)
+        return height + 1
 
     def untablify(self, obj_table):
         self.data = obj_table[self.data]
@@ -228,7 +253,11 @@ class TreeNode(DataStructure):
                 self.data == other.data and
                 self.children == other.children)
 
+    def __hash__(self):
+        return super().__hash__()
+
 class String(collections.UserString, DataStructure):
+
     def __init__(self, *args, **kwargs):
         collections.UserString.__init__(self, *args)
         DataStructure.__init__(self, **kwargs)
