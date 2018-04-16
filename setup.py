@@ -10,7 +10,11 @@ setup(name='algviz',
       entry_points={
           "console_scripts": [
               "algviz_graph_mockup=algviz.tools.graph_drawing_mockup:main",
+              "algviz_rec_draw=algviz.tools.draw_recursive_pic:main",
               "algviz_quicksort_example=algviz.tools.quicksort_tree:main",
           ]},
-      install_requires=['pygraphviz'],
+      install_requires=[
+          'pygraphviz',
+          'svgutils'
+      ],
 )

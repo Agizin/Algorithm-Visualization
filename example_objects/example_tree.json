@@ -1,0 +1,20 @@
+[
+    {
+        "T": "treenode", "uid": "asdf", "var": "mytree", "data": 1,
+        "children": [
+            {"T": "treenode", "data": {"T": "string", "data": "Hello, world"},
+             "children": [{"T": "treenode", "data": 2, "children": []}]
+            },
+            {"T": "treenode", "data": {"T": "string", "data": "Goodbye, world"},
+             "children": [{"T": "treenode", "data": 3, "children": []},
+                          {"T": "treenode", "data": 4, "children": []}]
+            },
+            {"T": "treenode", "data": {"T": "string", "data": "poop"},
+             "children": [{"T": "treenode", "data": 5, "children": []},
+                          {"T": "treenode", "data": 6, "children": []}]
+            }
+        ]
+    }
+]
+            
+             

@@ -1,0 +1,32 @@
+[
+    [
+        {"uid": "s0", "type": "string", "data": "Hello, world!"},
+        {"uid": "s1", "type": "string", "data": "Goodbye, world!"},
+        {"uid": "mycalltree", "type": "treenode", "data": {
+            "type": "ptr", "data": "s0"},
+         "children": ["mycalltreeL", "mycalltreeR"]},
+        {"uid": "mycalltreeL", "type": "treenode", "data": {"type": "ptr", "data": "s1"},
+         "children": ["mycalltreeLL", "mycalltreeLR"]},
+        {"uid": "mycalltreeLL", "type": "treenode", "data": {"type": "ptr", "data": "s1"}},
+        {"uid": "mycalltreeLR", "type": "treenode", "data": {"type": "ptr", "data": "s0"}},
+        {"uid": "mycalltreeR", "type": "treenode", "data": {"type": "string", "data": "poodles", "uid": "s2"}, "children": ["mycalltreeRL", "mycalltreeRR"]},
+        {"uid": "mycalltreeRL", "type": "treenode", "data": {"type": "ptr", "data": "s2"}},
+        {"uid": "mycalltreeRR", "type": "treenode", "data": {"type": "string", "data": "wakalixes"}, "children": ["mycalltreeRRL", "mycalltreeRRR"]},
+        {"uid": "mycalltreeRRL", "type": "treenode", "data": {"type": "string", "data": "zoo"}},
+        {"uid": "mycalltreeRRR", "type": "treenode", "data": {"type": "string", "data": "password1234"}, "children": ["mycalltreeRRRL", "mycalltreeRRRR"]},
+        {"uid": "mycalltreeRRRL", "type": "treenode", "data": {"type": "string", "data": "sdlkfjd"}},
+        {"uid": "mycalltreeRRRR", "type": "treenode", "data": {"type": "string", "data": "woooorrrggglsz"}, "children": ["mycalltreeRRRRL", "mycalltreeRRRRR"]},
+        {"uid": "mycalltreeRRRRL", "type": "treenode", "data": {"type": "string", "data": "sdlkfj"}},
+        {"uid": "mycalltreeRRRRR", "type": "treenode", "data": {"type": "string", "data": "qeoifh"}, "children": ["mycalltreeRRRRRL", "mycalltreeRRRRRR"]},
+        {"uid": "mycalltreeRRRRRL", "type": "treenode", "data": {"type": "string", "data": "oiehfe"}},
+        {"uid": "mycalltreeRRRRRR", "type": "treenode", "data": {"type": "string", "data": "sodifhsdfds"}, "children": ["mycalltreeRRRRRRL", "mycalltreeRRRRRRR"]},
+        {"uid": "mycalltreeRRRRRRL", "type": "treenode", "data": {"type": "string", "data": "sdoifhsd"}},
+        {"uid": "mycalltreeRRRRRRR", "type": "treenode", "data": {"type": "string", "data": "weoifhewf"}, "children": ["mycalltreeRRRRRRRL", "mycalltreeRRRRRRRR"]},
+        {"uid": "mycalltreeRRRRRRRL", "type": "treenode", "data": {"type": "ptr", "uid": "llama1", "data": {
+            "type": "ptr", "uid": "llama2", "data":{
+                "type": "ptr", "uid": "llama3", "data": "llama1"}}}},
+        {"uid": "mycalltreeRRRRRRRR", "type": "treenode", "data": {"type": "string", "data": "weoifhewf"}, "children": ["mycalltreeRRRRRRRRL", "mycalltreeRRRRRRRRR"]},
+        {"uid": "mycalltreeRRRRRRRRL", "type": "treenode", "data": {"type": "string", "data": "wiefeji"}},
+        {"uid": "mycalltreeRRRRRRRRR", "type": "treenode", "data": "#null"}
+    ]
+]
