@@ -1,0 +1,248 @@
+[
+  [
+    {
+      "type": "treenode",
+      "uid": "139804218278856",
+      "var": "target",
+      "data": 6,
+      "children": [
+        {
+          "type": "treenode",
+          "uid": "139804218279080",
+          "data": 0,
+          "children": [
+            {
+              "type": "null",
+              "uid": "#null"
+            },
+            {
+              "type": "treenode",
+              "uid": "139804218279584",
+              "data": 3,
+              "children": [
+                {
+                  "type": "treenode",
+                  "uid": "139804218279640",
+                  "data": 2,
+                  "children": [
+                    {
+                      "type": "treenode",
+                      "uid": "139804218280760",
+                      "data": 1,
+                      "children": [
+                        "#null",
+                        "#null"
+                      ]
+                    },
+                    "#null"
+                  ]
+                },
+                {
+                  "type": "treenode",
+                  "uid": "139804218279696",
+                  "data": 5,
+                  "children": [
+                    {
+                      "type": "treenode",
+                      "uid": "139804218280424",
+                      "data": 4,
+                      "children": [
+                        "#null",
+                        "#null"
+                      ]
+                    },
+                    "#null"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "treenode",
+          "uid": "139804218279136",
+          "data": 19,
+          "children": [
+            {
+              "type": "treenode",
+              "uid": "139804218278968",
+              "data": 10,
+              "children": [
+                {
+                  "type": "treenode",
+                  "uid": "139804218278912",
+                  "data": 7,
+                  "children": [
+                    "#null",
+                    {
+                      "type": "treenode",
+                      "uid": "139804218280032",
+                      "data": 9,
+                      "children": [
+                        {
+                          "type": "treenode",
+                          "uid": "139804218281656",
+                          "data": 8,
+                          "children": [
+                            "#null",
+                            "#null"
+                          ]
+                        },
+                        "#null"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "treenode",
+                  "uid": "139804218279248",
+                  "data": 13,
+                  "children": [
+                    {
+                      "type": "treenode",
+                      "uid": "139804218279304",
+                      "data": 12,
+                      "children": [
+                        {
+                          "type": "treenode",
+                          "uid": "139804218279416",
+                          "data": 11,
+                          "children": [
+                            "#null",
+                            "#null"
+                          ]
+                        },
+                        "#null"
+                      ]
+                    },
+                    {
+                      "type": "treenode",
+                      "uid": "139804218279360",
+                      "data": 17,
+                      "children": [
+                        {
+                          "type": "treenode",
+                          "uid": "139804218279864",
+                          "data": 14,
+                          "children": [
+                            "#null",
+                            {
+                              "type": "treenode",
+                              "uid": "139804218281152",
+                              "data": 15,
+                              "children": [
+                                "#null",
+                                {
+                                  "type": "treenode",
+                                  "uid": "139804218281824",
+                                  "data": 16,
+                                  "children": [
+                                    "#null",
+                                    "#null"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "treenode",
+                          "uid": "139804218279920",
+                          "data": 18,
+                          "children": [
+                            "#null",
+                            "#null"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "treenode",
+              "uid": "139804218279192",
+              "data": 21,
+              "children": [
+                {
+                  "type": "treenode",
+                  "uid": "139804218279752",
+                  "data": 20,
+                  "children": [
+                    "#null",
+                    "#null"
+                  ]
+                },
+                {
+                  "type": "treenode",
+                  "uid": "139804218279808",
+                  "data": 24,
+                  "children": [
+                    {
+                      "type": "treenode",
+                      "uid": "139804218280088",
+                      "data": 22,
+                      "children": [
+                        "#null",
+                        {
+                          "type": "treenode",
+                          "uid": "139804218280368",
+                          "data": 23,
+                          "children": [
+                            "#null",
+                            "#null"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "treenode",
+                      "uid": "139804218280144",
+                      "data": 26,
+                      "children": [
+                        {
+                          "type": "treenode",
+                          "uid": "139804218280200",
+                          "data": 25,
+                          "children": [
+                            "#null",
+                            "#null"
+                          ]
+                        },
+                        {
+                          "type": "treenode",
+                          "uid": "139804218280256",
+                          "data": 27,
+                          "children": [
+                            "#null",
+                            {
+                              "type": "treenode",
+                              "uid": "139804218280592",
+                              "data": 28,
+                              "children": [
+                                "#null",
+                                {
+                                  "type": "treenode",
+                                  "uid": "139804218280704",
+                                  "data": 29,
+                                  "children": [
+                                    "#null",
+                                    "#null"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]

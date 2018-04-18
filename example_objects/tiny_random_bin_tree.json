@@ -1,0 +1,208 @@
+[
+  [
+    {
+      "type": "treenode",
+      "uid": "140125230613448",
+      "var": "target",
+      "data": 4,
+      "children": [
+        {
+          "type": "treenode",
+          "uid": "140125230613672",
+          "data": 2,
+          "children": [
+            {
+              "type": "treenode",
+              "uid": "140125230614008",
+              "data": 1,
+              "children": [
+                {
+                  "type": "treenode",
+                  "uid": "140125230614904",
+                  "data": 0,
+                  "children": [
+                    {
+                      "type": "null",
+                      "uid": "#null"
+                    },
+                    "#null"
+                  ]
+                },
+                "#null"
+              ]
+            },
+            {
+              "type": "treenode",
+              "uid": "140125230614064",
+              "data": 3,
+              "children": [
+                "#null",
+                "#null"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "treenode",
+          "uid": "140125230613728",
+          "data": 5,
+          "children": [
+            "#null",
+            {
+              "type": "treenode",
+              "uid": "140125230613784",
+              "data": 21,
+              "children": [
+                {
+                  "type": "treenode",
+                  "uid": "140125230613504",
+                  "data": 10,
+                  "children": [
+                    {
+                      "type": "treenode",
+                      "uid": "140125230614120",
+                      "data": 8,
+                      "children": [
+                        {
+                          "type": "treenode",
+                          "uid": "140125230614344",
+                          "data": 7,
+                          "children": [
+                            {
+                              "type": "treenode",
+                              "uid": "140125230615576",
+                              "data": 6,
+                              "children": [
+                                "#null",
+                                "#null"
+                              ]
+                            },
+                            "#null"
+                          ]
+                        },
+                        {
+                          "type": "treenode",
+                          "uid": "140125230614400",
+                          "data": 9,
+                          "children": [
+                            "#null",
+                            "#null"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "treenode",
+                      "uid": "140125230614176",
+                      "data": 19,
+                      "children": [
+                        {
+                          "type": "treenode",
+                          "uid": "140125230614232",
+                          "data": 11,
+                          "children": [
+                            "#null",
+                            {
+                              "type": "treenode",
+                              "uid": "140125230614624",
+                              "data": 16,
+                              "children": [
+                                {
+                                  "type": "treenode",
+                                  "uid": "140125230614680",
+                                  "data": 14,
+                                  "children": [
+                                    {
+                                      "type": "treenode",
+                                      "uid": "140125230614792",
+                                      "data": 13,
+                                      "children": [
+                                        {
+                                          "type": "treenode",
+                                          "uid": "140125230615016",
+                                          "data": 12,
+                                          "children": [
+                                            "#null",
+                                            "#null"
+                                          ]
+                                        },
+                                        "#null"
+                                      ]
+                                    },
+                                    {
+                                      "type": "treenode",
+                                      "uid": "140125230614848",
+                                      "data": 15,
+                                      "children": [
+                                        "#null",
+                                        "#null"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "treenode",
+                                  "uid": "140125230614736",
+                                  "data": 17,
+                                  "children": [
+                                    "#null",
+                                    {
+                                      "type": "treenode",
+                                      "uid": "140125230615296",
+                                      "data": 18,
+                                      "children": [
+                                        "#null",
+                                        "#null"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "treenode",
+                          "uid": "140125230614288",
+                          "data": 20,
+                          "children": [
+                            "#null",
+                            "#null"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "treenode",
+                  "uid": "140125230613840",
+                  "data": 22,
+                  "children": [
+                    "#null",
+                    {
+                      "type": "treenode",
+                      "uid": "140125230613952",
+                      "data": 23,
+                      "children": [
+                        "#null",
+                        {
+                          "type": "treenode",
+                          "uid": "140125230615184",
+                          "data": 24,
+                          "children": [
+                            "#null",
+                            "#null"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]

@@ -1,0 +1,25 @@
+[
+  [
+    {"uid": "mycalltree", "type": "treenode", "data": {"type": "array", "data": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0]}, "children": ["mycalltreeL", "mycalltreeR"]},
+    {"uid": "mycalltreeL", "type": "treenode", "data": {"type": "array", "data": [0.0, 1.0, 0.0]}, "children": ["mycalltreeLL", "mycalltreeLR"]},
+    {"uid": "mycalltreeLL", "type": "treenode", "data": {"type": "array", "data": [0.0]}},
+    {"uid": "mycalltreeLR", "type": "treenode", "data": {"type": "array", "data": [1.0]}},
+    {"uid": "mycalltreeR", "type": "treenode", "data": {"type": "array", "data": [2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]}, "children": ["mycalltreeRL", "mycalltreeRR"]},
+    {"uid": "mycalltreeRL", "type": "treenode", "data": {"type": "array", "data": [2.0]}},
+    {"uid": "mycalltreeRR", "type": "treenode", "data": {"type": "array", "data": [3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]}, "children": ["mycalltreeRRL", "mycalltreeRRR"]},
+    {"uid": "mycalltreeRRL", "type": "treenode", "data": {"type": "array", "data": [3.0]}},
+    {"uid": "mycalltreeRRR", "type": "treenode", "data": {"type": "array", "data": [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]}, "children": ["mycalltreeRRRL", "mycalltreeRRRR"]},
+    {"uid": "mycalltreeRRRL", "type": "treenode", "data": {"type": "array", "data": [4.0]}},
+    {"uid": "mycalltreeRRRR", "type": "treenode", "data": {"type": "array", "data": [5.0, 6.0, 7.0, 8.0, 9.0, 5.0, 6.0, 7.0, 8.0, 9.0]}, "children": ["mycalltreeRRRRL", "mycalltreeRRRRR"]},
+    {"uid": "mycalltreeRRRRL", "type": "treenode", "data": {"type": "array", "data": [5.0]}},
+    {"uid": "mycalltreeRRRRR", "type": "treenode", "data": {"type": "array", "data": [6.0, 7.0, 8.0, 9.0, 6.0, 7.0, 8.0, 9.0]}, "children": ["mycalltreeRRRRRL", "mycalltreeRRRRRR"]},
+    {"uid": "mycalltreeRRRRRL", "type": "treenode", "data": {"type": "array", "data": [6.0]}},
+    {"uid": "mycalltreeRRRRRR", "type": "treenode", "data": {"type": "array", "data": [7.0, 8.0, 9.0, 7.0, 8.0, 9.0]}, "children": ["mycalltreeRRRRRRL", "mycalltreeRRRRRRR"]},
+    {"uid": "mycalltreeRRRRRRL", "type": "treenode", "data": {"type": "array", "data": [7.0]}},
+    {"uid": "mycalltreeRRRRRRR", "type": "treenode", "data": {"type": "array", "data": [8.0, 9.0, 8.0, 9.0]}, "children": ["mycalltreeRRRRRRRL", "mycalltreeRRRRRRRR"]},
+    {"uid": "mycalltreeRRRRRRRL", "type": "treenode", "data": {"type": "array", "data": [8.0]}},
+    {"uid": "mycalltreeRRRRRRRR", "type": "treenode", "data": {"type": "array", "data": [9.0, 9.0]}, "children": ["mycalltreeRRRRRRRRL", "mycalltreeRRRRRRRRR"]},
+    {"uid": "mycalltreeRRRRRRRRL", "type": "treenode", "data": {"type": "array", "data": [9.0]}},
+    {"uid": "mycalltreeRRRRRRRRR", "type": "treenode", "data": {"type": "array", "data": []}}
+  ]
+]
