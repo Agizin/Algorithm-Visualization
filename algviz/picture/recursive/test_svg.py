@@ -26,6 +26,10 @@ class SVGHintTestCaseMixin:
         self.assert_positive_number(width)
         self.assert_positive_number(height)
 
-class FullDrawerDefaultSVGHintTestCase(SVGHintTestCaseMixin, unittest.TestCase):
+    def test_array_margins_are_reasonable(self):
+        self.assert_positive_number(self.svg_hint.array_border_margin)
+        self.assert_positive_number(self.svg_hint.array_cell_sep)
+
+class FullSVGDrawerDefaultSVGHintTestCase(SVGHintTestCaseMixin, unittest.TestCase):
     def setUp(self):
-        self.svg_hint = svg.FullDrawer({}).hint
+        self.svg_hint = svg.FullSVGDrawer({}).hint

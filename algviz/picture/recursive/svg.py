@@ -265,7 +265,7 @@ class SplineArrowElementDrawer(StraightArrowElementDrawer):
 class IncompleteLayoutError(Exception):
     pass
 
-class FullDrawer:
+class FullSVGDrawer:
 
     def __init__(self, delegates, margin=7):
         """Pass a dictionary mapping Element subclasses to ElementDrawer subclasses"""
@@ -331,4 +331,4 @@ class FullDrawer:
             margin=self._margin)
 
 def default_full_drawer():
-    return FullDrawer({})
+    return FullSVGDrawer({})
