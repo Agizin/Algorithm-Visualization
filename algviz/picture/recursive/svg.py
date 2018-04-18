@@ -180,7 +180,7 @@ class DefaultNullDrawer(NullDrawer):
 class NodeElementDrawer(RectangularElementDrawer):
     pass
 
-class EllipseNodeElementDrawer(RectangularElementDrawer):
+class EllipseNodeElementDrawer(NodeElementDrawer):
     def draw_at(self, node_elt, top_left, svg_doc):
         svg_doc.add(svg_doc.ellipse(
             center=anchors.from_top_left_corner(node_elt, top_left,

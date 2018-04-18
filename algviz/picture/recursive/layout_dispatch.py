@@ -2,6 +2,7 @@ from . import rec_layout
 from algviz.parser import structures
 
 def map_metadata_key_to_layout_subclass(config):
+    # TODO - interpret user config here
     return {}
 
 _default_mapping = {
@@ -18,7 +19,6 @@ _default_mapping = {
 }
 
 def add_defaults(mapping):
-    global _default_mapping
     for key, default in _default_mapping.items():
         mapping.setdefault(key, default)
 
@@ -26,5 +26,6 @@ def make_layout_chooser(config):
     mapping = map_metadata_key_to_layout_subclass(config)
     add_defaults(mapping)
     def choose_layout(obj):
+        # TODO - consider metadata
         return mapping[type(obj)]
     return choose_layout

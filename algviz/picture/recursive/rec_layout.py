@@ -12,15 +12,15 @@ class LayoutOperationError(Exception):
 
 class AbstractLayout(object):
 
-    def __init__(self, svg_hint=None, choose_child_cls=None, ptr_targets=None):
+    def __init__(self, svg_hint=None, choose_child_cls=None, struct_to_elem=None):
         self.svg_hint = svg_hint
         self._choose_child_cls = choose_child_cls
-        self._placements = {}  # {placement: coordinate}
-        self._children = {}  # Like placements, but for sub-pictures instead of primitives
+        self._elem_positions = {}  # {element: coordinate}
+        self._children = {}  # Like elem_positions, but for sub-pictures instead of primitives
         self._decorations = []  # these have no coordinates
-        # ptr_targets is a map from DataStructure instances to the
+        # struct_to_elem is a map from DataStructure instances to the
         # PictureElement instances that have been placed to represent them.
-        self._ptr_targets = {} if ptr_targets is None else ptr_targets
+        self._struct_to_elem = {} if struct_to_elem is None else struct_to_elem
         self._finalized = False
 
     def finalize(self, width, height, ref_point=Coord(0, 0), ref_anchor=Anchor.top_left):
@@ -36,17 +36,17 @@ class AbstractLayout(object):
         self._finalized = True
 
     def objects_in_layout(self):
-        return self._ptr_targets.keys()
+        return self._struct_to_elem.keys()
 
     def is_in_layout(self, obj):
-        return obj in self._ptr_targets
+        return obj in self._struct_to_elem
 
     def make_child(self, obj, layout_cls=None, **subclass_kwargs):
         if layout_cls is None:
             layout_cls = self._choose_child_cls(obj)  # choose a picture class
         return layout_cls(obj, svg_hint=self.svg_hint,
                           choose_child_cls=self._choose_child_cls,
-                          ptr_targets=self._ptr_targets,
+                          struct_to_elem=self._struct_to_elem,
                           **subclass_kwargs)
 
     def add_rect_element(self, rect_element, coord, anchor=Anchor.top_left, represents=None):
@@ -54,12 +54,12 @@ class AbstractLayout(object):
         assert isinstance(rect_element, elements.RectangularElement)
         if represents is not None:
             # assert isinstance(represents, structures.DataStructure)
-            if represents in self._ptr_targets and should_draw_only_once(represents):
+            if represents in self._struct_to_elem and should_draw_only_once(represents):
                 warnings.warn("Object {} is duplicated in layout {}"
                               .format(obj.uid, self))
-            self._ptr_targets[represents] = rect_element
+            self._struct_to_elem[represents] = rect_element
 
-        self._placements[rect_element] = anchors.top_left_corner(
+        self._elem_positions[rect_element] = anchors.top_left_corner(
             rect_element, coord, anchor)
 
     def scale(self, factor):
@@ -109,7 +109,7 @@ class AbstractLayout(object):
         # It's important that we do a pre-order traversal.
         def scale_coord(coord):
             return Coord(self._scale * coord.x, self._scale * coord.y)
-        for element, coord in self._placements.items():
+        for element, coord in self._elem_positions.items():
             # if isinstance(element, AbstractLayout):
             #     children.append((coord, element))
             # else:
@@ -273,19 +273,19 @@ class CompositeLayout(AbstractLayout):
         super().__init__(**kwargs)
         if len(sub_layouts) is 0:
             raise TypeError("{} requires at least one sub-picture".format(type(self)))
-        self._ptr_targets = collections.ChainMap(self._ptr_targets)
+        self._struct_to_elem = collections.ChainMap(self._struct_to_elem)
         next_child_x = 0
         for child in sub_layouts:
             self.add_child(child, Coord(next_child_x, 0), anchor=Anchor.top_left)
             next_child_x += child.width + self.svg_hint.margin
-            self._ptr_targets.maps.append(child._ptr_targets)
+            self._struct_to_elem.maps.append(child._struct_to_elem)
         for child in sub_layouts:
             for ptr_req in child.pointer_requirements():
                 referent = ptr_req.ptr_obj.referent
-                if referent in self._ptr_targets:
+                if referent in self._struct_to_elem:
                     self.add_decoration(
                         elements.SplineArrow(ptr_req.ptr_element,
-                                             self._ptr_targets[referent]))
+                                             self._struct_to_elem[referent]))
                     ptr_req.satisfy()
         self.finalize(width=next_child_x - self.svg_hint.margin,
                       height=max(child.height for child in self._children))
@@ -319,7 +319,8 @@ class CircularGraphLayout(AbstractLayout):
                       ref_point=Coord(0, 0), ref_anchor=Anchor.center)
 
 def should_draw_only_once(obj):
-    return not isinstance(obj, (float, int)) and obj.metadata.get("draw_once", True)
+    return (not isinstance(obj, (float, int, structures.NullType))
+            and obj.metadata.get("draw_once", True))
 
 def add_to_disjoint_layouts(layouts, new_layout, may_be_redundant=True):
     def contained_in(layout0, layout1):
