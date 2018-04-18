@@ -89,6 +89,7 @@ def test_nested_tree(test_dir, outfile):
     pic.save(os.path.join(test_dir, outfile))
 
 def test_pointer_tree(test_dir, outfile):
+    """Tests drawing of trees with pointers to other trees"""
     a = structures.String("A", uid=1)
     b = structures.String("B", uid=2)
     c = structures.String("C", uid=4)
@@ -108,17 +109,19 @@ def test_pointer_tree(test_dir, outfile):
     pic.save(os.path.join(test_dir, outfile))
 
 def test_null_children_tree(test_dir, outfile):
+    """Tests drawing of trees wuith null valued children"""
     a = structures.String("a", uid=1)
     b = structures.String("b", uid=2)
     c = structures.String("c", uid=3)
-    t1 = structures.TreeNode(b, uid=4)
-    t2 = structures.TreeNode(c, uid=5)
+    t1 = structures.TreeNode(b, [None], uid=4)
+    t2 = structures.TreeNode(c, [None, None], uid=5)
     t3 = structures.TreeNode(a, [t1, None, t2], uid=6)
     pic = TreePicture(t3)
     pic.draw()
     pic.save(os.path.join(test_dir, outfile))
 
 def test_main(test_dir, outfile):
+    """Tests generating svg by calling main file"""
     s = structures.String("Testing main file...", uid=1)
     svg = make_svg(s, None, {})
     with open(os.path.join(test_dir, outfile), 'w') as f:
