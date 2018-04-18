@@ -80,7 +80,7 @@ class DelegatingSVGHint(SVGHint):
     def array_border_margin(self):
         return self.array_frame_hint.array_border_margin
 
-class ElementDrawer(metaclass=abc.ABCMeta):
+class ElementPainter(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def draw(self, element, locations, svg_doc):
         """element is an element of the correct type.
@@ -89,7 +89,7 @@ class ElementDrawer(metaclass=abc.ABCMeta):
         appropriate.
         """
 
-class RectangularElementDrawer(ElementDrawer):
+class RectangularElementPainter(ElementPainter):
     def draw(self, element, locations, svg_doc):
         return self.draw_at(element, locations[element], svg_doc)
 
@@ -97,10 +97,10 @@ class RectangularElementDrawer(ElementDrawer):
     def draw_at(self, element, top_left_corner, svg_doc):
         """Draw the given element at the given location in the svg_doc"""
 
-class StringDrawer(RectangularElementDrawer, StringHint):
+class StringPainter(RectangularElementPainter, StringHint):
     pass
 
-class DefaultStringDrawer(StringDrawer):
+class DefaultStringPainter(StringPainter):
     def __init__(self, font_pixel_size=15):
         self.font_pixel_size = 15
     def string_size(self, text):
@@ -113,13 +113,13 @@ class DefaultStringDrawer(StringDrawer):
                                  font_size="{}px".format(self.font_pixel_size),
                                  dy=[self.font_pixel_size]))
 
-class NullDrawer(RectangularElementDrawer, NullHint):
+class NullPainter(RectangularElementPainter, NullHint):
     pass
 
-class ArrayFrameDrawer(RectangularElementDrawer, ArrayFrameHint):
+class ArrayFramePainter(RectangularElementPainter, ArrayFrameHint):
     pass
 
-class BlackBorderArrayFrameDrawer(ArrayFrameDrawer):
+class BlackBorderArrayFramePainter(ArrayFramePainter):
 
     def __init__(self, stroke_width=1.5, stroke_color="black"):
         self.stroke_width = stroke_width
@@ -161,7 +161,7 @@ class BlackBorderArrayFrameDrawer(ArrayFrameDrawer):
                              (top_left[0] + frame.width, y_coord)],
                             svg_doc)
 
-class DefaultNullDrawer(NullDrawer):
+class DefaultNullPainter(NullPainter):
     def __init__(self, null_size=(6, 8)):
         self._null_size = null_size
 
@@ -177,10 +177,10 @@ class DefaultNullDrawer(NullDrawer):
                          anchors.Anchor.bottom,
                          anchors.Anchor.left])))
 
-class NodeElementDrawer(RectangularElementDrawer):
+class NodeElementPainter(RectangularElementPainter):
     pass
 
-class EllipseNodeElementDrawer(NodeElementDrawer):
+class EllipseNodeElementPainter(NodeElementPainter):
     def draw_at(self, node_elt, top_left, svg_doc):
         svg_doc.add(svg_doc.ellipse(
             center=anchors.from_top_left_corner(node_elt, top_left,
@@ -190,7 +190,7 @@ class EllipseNodeElementDrawer(NodeElementDrawer):
             stroke_width="1",
             fill_opacity="0.10"))
 
-class BoxNodeElementDrawer(NodeElementDrawer):
+class BoxNodeElementPainter(NodeElementPainter):
     def draw_at(self, node_elt, top_left, svg_doc):
         svg_doc.add(svg_doc.rect(insert=top_left,
                                  size=(node_elt.width, node_elt.height),
@@ -198,14 +198,14 @@ class BoxNodeElementDrawer(NodeElementDrawer):
                                  stroke_width="1",
                                  fill_opacity="0.10"))
 
-class InvisibleNodeElementDrawer(NodeElementDrawer):
+class InvisibleNodeElementPainter(NodeElementPainter):
     def draw_at(self, node, top_left, svg_doc):
         pass
 
-class PointerElementDrawer(RectangularElementDrawer, PointerHint):
+class PointerElementPainter(RectangularElementPainter, PointerHint):
     pass
 
-class DefaultPointerElementDrawer(PointerElementDrawer):
+class DefaultPointerElementPainter(PointerElementPainter):
     def __init__(self, ptr_size=(4, 6)):
         self._ptr_size = ptr_size
     def draw_at(self, ptr_elt, top_left, svg_doc):
@@ -220,7 +220,7 @@ class DefaultPointerElementDrawer(PointerElementDrawer):
         return self._ptr_size
 
 
-class ArrowElementDrawer(ElementDrawer):
+class ArrowElementPainter(ElementPainter):
     # maybe put code for arrowheads here, since people who want lots of
     # arrowhead options will just choose GraphViz anyway?
     # Also so we can delegate and have fancy behavior that subclasses don't know about.
@@ -253,30 +253,30 @@ class ArrowElementDrawer(ElementDrawer):
         atan = math.atan(vector[1] / vector[0])
         return atan if vector[0] > 0 else atan + math.pi
 
-class StraightArrowElementDrawer(ArrowElementDrawer):
+class StraightArrowElementPainter(ArrowElementPainter):
     def draw(self, arrow, locations, svg_doc):
         src, dst = self.closest_connection_points(arrow, locations)
         svg_doc.add(svg_doc.line(src, dst, style="stroke:rgb(50,50,50);stroke-width:2"))
         self.draw_arrowhead(dst, self.angle(src, dst), svg_doc)
 
-class SplineArrowElementDrawer(StraightArrowElementDrawer):
+class SplineArrowElementPainter(StraightArrowElementPainter):
     pass  # TODO -- splines instead
 
 class IncompleteLayoutError(Exception):
     pass
 
-class FullSVGDrawer:
+class FullSVGPainter:
 
     def __init__(self, delegates, margin=7):
-        """Pass a dictionary mapping Element subclasses to ElementDrawer subclasses"""
-        delegates.setdefault(elements.NodeElement, BoxNodeElementDrawer())
-        delegates.setdefault(elements.StringElement, DefaultStringDrawer())
-        delegates.setdefault(elements.PointerSource, DefaultPointerElementDrawer())
-        delegates.setdefault(elements.NullElement, DefaultNullDrawer())
-        delegates.setdefault(elements.Arrow, StraightArrowElementDrawer())
-        delegates.setdefault(elements.SplineArrow, StraightArrowElementDrawer())
+        """Pass a dictionary mapping Element subclasses to ElementPainter subclasses"""
+        delegates.setdefault(elements.NodeElement, BoxNodeElementPainter())
+        delegates.setdefault(elements.StringElement, DefaultStringPainter())
+        delegates.setdefault(elements.PointerSource, DefaultPointerElementPainter())
+        delegates.setdefault(elements.NullElement, DefaultNullPainter())
+        delegates.setdefault(elements.Arrow, StraightArrowElementPainter())
+        delegates.setdefault(elements.SplineArrow, StraightArrowElementPainter())
         delegates.setdefault(elements.StraightArrow, delegates[elements.Arrow])
-        delegates.setdefault(elements.ArrayFrame, BlackBorderArrayFrameDrawer())
+        delegates.setdefault(elements.ArrayFrame, BlackBorderArrayFramePainter())
         self._delegates = delegates
         self._margin = margin
         self._pending_arrows = collections.defaultdict(set)
@@ -331,4 +331,4 @@ class FullSVGDrawer:
             margin=self._margin)
 
 def default_full_drawer():
-    return FullSVGDrawer({})
+    return FullSVGPainter({})

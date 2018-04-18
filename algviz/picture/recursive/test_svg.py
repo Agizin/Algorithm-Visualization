@@ -30,6 +30,6 @@ class SVGHintTestCaseMixin:
         self.assert_positive_number(self.svg_hint.array_border_margin)
         self.assert_positive_number(self.svg_hint.array_cell_sep)
 
-class FullSVGDrawerDefaultSVGHintTestCase(SVGHintTestCaseMixin, unittest.TestCase):
+class FullSVGPainterDefaultSVGHintTestCase(SVGHintTestCaseMixin, unittest.TestCase):
     def setUp(self):
-        self.svg_hint = svg.FullSVGDrawer({}).hint
+        self.svg_hint = svg.FullSVGPainter({}).hint
