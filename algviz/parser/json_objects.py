@@ -12,6 +12,7 @@ class Tokens:
     TO = "to"
     CHILDREN = "children"  # children of a tree node
     DATA = "data"
+    SUCCESSOR = "successor" #successor of a linked list node
     GRAPH_NODES = "nodes"  # not a type, but an attribute of a graph
     GRAPH_EDGES = "edges"
     VARNAME = "var"
@@ -19,6 +20,7 @@ class Tokens:
     # Possible values for TYPE.  Keep these alphabetized and give them all the
     # _T suffix, please.
     ARRAY_T = "array"
+    LINKED_LIST_T = "linkedlist"
     TREE_NODE_T = "treenode"
     EDGE_T = "edge"
     GRAPH_T = "graph"
@@ -113,6 +115,12 @@ class SnapshotDecoder(metaclass=Dispatcher):
     @Dispatcher.dispatch(Tokens.ARRAY_T)
     def array_decode(self, array, **kwargs):
         return structures.Array(array[Tokens.DATA], **kwargs)
+
+    @Dispatcher.dispatch(Tokens.LINKED_LIST_T)
+    def linked_list_decode(self, ll, **kwargs):
+        return structures.LinkedList(value=ll.get(Tokens.DATA, structures.Null),
+                                     successor=ll.get(Tokens.SUCCESSOR), 
+                                     **kwargs)
 
     @Dispatcher.dispatch(Tokens.TREE_NODE_T)
     def tree_node_decode(self, tree_node, **kwargs):

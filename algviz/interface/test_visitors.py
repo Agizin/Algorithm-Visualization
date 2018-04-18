@@ -93,3 +93,37 @@ class ArrayVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
         arr = self.to_hell_and_back([1, 2, 3])
         self.assertIsInstance(arr, structures.Array)
         self.assertEqual(list(arr), [1, 2, 3])
+
+class LinkedListVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
+    visitor_cls = visitors.LinkedListVisitor
+
+    def sample_instance(self):#A linked list representing the array [1,2,3]
+        ll3 = structures.LinkedList(3)
+        ll2 = structures.LinkedList(2, ll3)
+        ll1 = structures.LinkedList(1, ll2)
+        return ll1
+
+    def test_ll_export_and_import(self):
+        ll = self.to_hell_and_back(self.sample_instance())
+        self.assertIsInstance(ll, structures.LinkedList)
+        self.assertEqual(ll, self.sample_instance())
+
+    def test_ll_partial_visit(self):#test to see if we only visit some of the list
+        sample = self.sample_instance()
+        sample = sample.successor
+        ll = self.to_hell_and_back(sample)
+        self.assertIsInstance(ll, structures.LinkedList)
+        self.assertEqual(ll, sample)
+
+    def test_ll_length_1(self):
+        sample = self.sample_instance()
+        sample = sample.successor.successor
+        ll = self.to_hell_and_back(sample)
+        self.assertIsInstance(ll, structures.LinkedList)
+        self.assertEqual(ll, sample)
+
+    def test_ll_empty(self):
+        sample = structures.LinkedList()
+        ll = self.to_hell_and_back(sample)
+        self.assertIsInstance(ll, structures.LinkedList)
+        self.assertEqual(ll, sample)

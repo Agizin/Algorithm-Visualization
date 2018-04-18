@@ -133,14 +133,36 @@ class NullType(DataStructure, metaclass=_Singleton):
 
 Null = NullType()
 
-class LinkedListNode(DataStructure):
-    def __init__(self, value, successor=Null):
+class LinkedList(DataStructure):
+    def __init__(self, value=Null, successor=Null, **kwargs):
+        super().__init__(**kwargs)
         self.value = value
         self.successor = successor
 
     def untablify(self, obj_table):
         self.value = obj_table[self.value]
         self.successor = obj_table[self.successor]
+
+    def get_next(self):
+        if self.value == Null:
+            pass
+        elif self.successor == Null:
+            self.value = Null
+        else:
+            newCurrent = self.successor
+            self.successor = self.successor.successor
+            self.value = newCurrent.value
+
+    def is_empty(self):
+        return self.value == Null
+
+    def get_data(self):
+        return self.value
+
+    def __eq__(self, other):
+        return (isinstance(other, LinkedList) and
+                self.value == other.value and 
+                self.successor == other.successor)
 
 class Graph(DataStructure):
     def __init__(self, nodes, edges, **kwargs):
