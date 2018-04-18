@@ -12,7 +12,7 @@ class SVGHintTestCaseMixin:
         self.assertGreaterEqual(val, 0)
 
     def test_pointer_size_is_tuple_of_numbers(self):
-        width, height = self.svg_hint.pointer_size
+        width, height = self.svg_hint.pointer_source_size
         self.assert_positive_number(width)
         self.assert_positive_number(height)
 

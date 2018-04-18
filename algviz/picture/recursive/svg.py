@@ -31,7 +31,7 @@ class ArrayFrameHint(metaclass=abc.ABCMeta):
 class PointerHint(metaclass=abc.ABCMeta):
     @property
     @abc.abstractmethod
-    def pointer_size(self):
+    def pointer_source_size(self):
         """The (width, height) of a Pointer"""
 
 class NullHint(metaclass=abc.ABCMeta):
@@ -62,8 +62,8 @@ class DelegatingSVGHint(SVGHint):
         return self._margin
 
     @property
-    def pointer_size(self):
-        return self.ptr_hint.pointer_size
+    def pointer_source_size(self):
+        return self.ptr_hint.pointer_source_size
 
     def string_size(self, text):
         return self.str_hint.string_size(text)
@@ -216,7 +216,7 @@ class DefaultPointerElementPainter(PointerElementPainter):
         ))
 
     @property
-    def pointer_size(self):
+    def pointer_source_size(self):
         return self._ptr_size
 
 

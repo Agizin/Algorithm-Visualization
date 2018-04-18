@@ -156,7 +156,7 @@ class PointerRequirement:
 
 class PointerLayout(TerminalLayout):
     def make_element(self, ptr):
-        width, height = self.svg_hint.pointer_size
+        width, height = self.svg_hint.pointer_source_size
         return elements.PointerSource(width, height)
 
     def __init__(self, ptr, **kwargs):
