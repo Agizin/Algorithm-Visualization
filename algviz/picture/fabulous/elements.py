@@ -45,9 +45,9 @@ class RectangularElement(PictureElement, metaclass = abc.ABCMeta):
 
 class BorderElement(RectangularElement):
     """Use to define borders around objects"""
-    def draw(self, svg_engine):
+    def draw(self, svg_engine, fill_opacity="0", stroke_width="2"):
         Shape.RECT.draw(self.center, self.width, self.height, svg_engine,
-                        fill_opacity="0", stroke_width = "2")
+                        fill_opacity=fill_opacity, stroke_width =stroke_width)
 
 class NodeElement(RectangularElement):
     def __init__(self, center, width, height, shape = None, style={}, **kwargs):
@@ -66,6 +66,10 @@ class NodeElement(RectangularElement):
 
     def draw(self, svg_engine):
         self.shape.draw(self.center, self.width, self.height, svg_engine, **self.style)
+
+class InvisibleNode(NodeElement):
+    def draw(self, svg_engine):
+        raise NotImplementedError("Drawing not supported for invisible nodes")
 
 class DecorationElement(PictureElement, metaclass=abc.ABCMeta):
     """Elements that do not take up blocks of space"""

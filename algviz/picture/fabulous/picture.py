@@ -140,6 +140,10 @@ class Picture(object, metaclass=abc.ABCMeta):
 class InternalPicture(Picture, metaclass = abc.ABCMeta):
     """Picture classes that contain subpictures that need to be composed into one"""
 
+    def __init__(self, structure, width, height, **kwargs):
+        self.pointer_style = kwargs.pop("pointer_style", {})
+        super().__init__(structure, width, height, **kwargs)
+    
     @abc.abstractmethod
     def _node_generator(self):
         pass
@@ -230,12 +234,11 @@ class TreePicture(InternalPicture):
         self.node_width = kwargs.pop("node_width", 100)
         self.node_height = kwargs.pop("node_height", 100)
         self.edge_length = kwargs.pop("edge_length", 200)
-        self.node_sep = kwargs.pop("node_sep", 10)
-        self.pointer_style = kwargs.pop("pointer_Style", {})
+        self.node_sep = kwargs.pop("margin", 10)
         #TODO: better way to assign default values?
         width = self._width_estimate(self.root)
         height = self._height_estimate(self.root)
-        super().__init__(tree_root, width, height)
+        super().__init__(tree_root, width, height, **kwargs)
 
     def _width_estimate(self, root):
         if root is None:
@@ -314,6 +317,67 @@ class TreePicture(InternalPicture):
         self.writeSVG(str(svg_engine))
         self._draw_node_data()
 
+class ArrayPicture(InternalPicture):
+
+    @staticmethod
+    def get_structure_type():
+        return structures.Array
+        
+    def __init__(self, array, style={}, **kwargs):
+        self.array = array.data
+        self.style = style
+        self.cell_width = kwargs.pop("cell_width", 100)
+        self.frame_width = kwargs.pop("frame_width", self._width_estimate())
+        self.frame_height = kwargs.pop("frame_height", self.cell_width)
+        self.margin = kwargs.pop("margin", 25)
+        self.nodes = []
+        super().__init__(array, self.frame_width+2*self.margin, self.frame_height+2*self.margin, **kwargs)
+        if(self.height<50):
+            import pdb
+            pdb.set_trace()
+
+    def _width_estimate(self):
+        return len(self.array)*self.cell_width
+
+    def _layout_nodes(self):
+        start_x = self.margin
+        for item in self.array:
+            end_x = start_x + self.cell_width
+            height = self.frame_height
+            width = end_x - start_x
+            center = (start_x + width/2, self.margin+height/2)
+            node = InvisibleNode(center, width, height, shape=Shape.RECT, style=self.style)
+            node.data = item
+            self.nodes.append(node)
+            start_x += self.cell_width
+
+    def _node_generator(self):
+        yield from self.nodes
+
+    def _draw_frame(self, svg_engine):
+        center = (self.width/2, self.height/2)
+        frame = BorderElement(center, self.frame_width, self.frame_height)
+        frame.draw(svg_engine, fill_opacity="1", stroke_width = DEFAULTS["stroke_width"])
+
+    def _draw_nodes(self, svg_engine):
+        start_height = self.margin
+        end_height = self.height - self.margin
+        x = self.margin
+        for node in self.nodes[:-1]:
+            x += node.width
+            start = (x,start_height)
+            end = (x, end_height)
+            svg_engine.draw_line(start, end, **self.style)
+
+    def draw(self):
+        self._layout_nodes()
+        svg_engine = SVGEngine(self.width, self.height)
+        self._draw_frame(svg_engine)
+        self._draw_nodes(svg_engine)
+        self.writeSVG(str(svg_engine))
+        self._draw_node_data()
+        
+        
 class LeafPicture(Picture, metaclass=abc.ABCMeta):
     """Abstract subclass for pictures that do not include subpictures"""
     pass

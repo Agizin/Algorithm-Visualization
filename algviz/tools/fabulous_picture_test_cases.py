@@ -127,6 +127,45 @@ def test_main(test_dir, outfile):
     with open(os.path.join(test_dir, outfile), 'w') as f:
         f.write(svg)
 
+def test_array_basic(test_dir, outfile):
+    a = structures.String("a", uid=1)
+    b = structures.String("b", uid=2)
+    c = structures.String("c", uid=3)
+    arr = structures.Array([a,b,c], uid=4)
+    pic = ArrayPicture(arr)
+    pic.draw()
+    pic.save(os.path.join(test_dir, outfile))
+
+def test_array_complex(test_dir, outfile):
+    a = structures.String("a", uid=1)
+    b = structures.String("b", uid=2)
+    c = structures.String("c", uid=3)
+    d = structures.String("d", uid=9)
+    e = structures.String("e", uid=10)
+    f = structures.String("f", uid=11)
+    t1 = structures.TreeNode(e, uid=4)
+    t2 = structures.TreeNode(f, uid=5)
+    t3 = structures.TreeNode(d, [t1,t2], uid=6)
+    arr1 = structures.Array([a,b], uid=7)
+    arr2 = structures.Array([arr1, c, t3], uid=8)
+    pic = ArrayPicture(arr2)
+    pic.draw()
+    pic.save(os.path.join(test_dir, outfile))
+
+def test_tree_of_arrays(test_dir, outfile):
+    a = structures.String("a", uid=1)
+    b = structures.String("b", uid=2)
+    c = structures.String("c", uid=3)
+    d = structures.String("d", uid=6)
+    e = structures.String("e", uid=7)
+    arr1 = structures.Array([a,b,c], uid=8)
+    arr2 = structures.Array([d,e], uid=9)
+    t1 = structures.TreeNode(arr2, uid=11)
+    t2 = structures.TreeNode(arr1, [t1], uid=12)
+    pic = TreePicture(t2)
+    pic.draw()
+    pic.save(os.path.join(test_dir, outfile))
+    
 if __name__ == "__main__":
     if not os.path.exists(test_dir):
         os.makedirs(test_dir)
@@ -140,3 +179,6 @@ if __name__ == "__main__":
     test_pointer_tree(test_dir, "08_pointer_tree.svg")
     test_null_children_tree(test_dir, "09_null_child_tree.svg")
     test_main(test_dir, "10_test_main.svg")
+    test_array_basic(test_dir, "11_array.svg")
+    test_array_complex(test_dir, "12_complex_array.svg")
+    test_tree_of_arrays(test_dir, "13_tree_of_arrays.svg")
