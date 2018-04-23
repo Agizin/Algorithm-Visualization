@@ -55,11 +55,10 @@ class Picture(object, metaclass=abc.ABCMeta):
         As subclasses are initialized, we add their respective structure types to the structure_map."""
         super().__init_subclass__(**kwargs)
         if not isabstract(cls):
-            structure_type = cls.get_structure_type()
-            if structure_type is None or not issubclass(structure_type, structures.DataStructure):
-                raise DataStructureException("Can only create picture of data structures, not: {}"
-                                             .format(structure_type))
-            Picture.structure_map[structure_type] = cls
+            structure_types = cls.get_structure_type()
+            assert(len(structure_types) > 0)
+            for structure_type in structure_types:
+                Picture.structure_map[structure_type] = cls
 
     def __init__(self, structure, width, height, **kwargs):
         self.structure = structure #data structure that this picture represents
@@ -225,7 +224,7 @@ class TreePicture(InternalPicture):
 
     @staticmethod
     def get_structure_type():
-        return structures.TreeNode
+        return [structures.TreeNode]
     
     def __init__(self, tree_root, style={}, **kwargs):
         self.root = tree_root
@@ -241,7 +240,7 @@ class TreePicture(InternalPicture):
         super().__init__(tree_root, width, height, **kwargs)
 
     def _width_estimate(self, root):
-        if root is None:
+        if root is structures.Null:
             return 0
         if root.is_leaf():
             return 2*self.node_width+self.node_sep
@@ -258,7 +257,7 @@ class TreePicture(InternalPicture):
 
     def _height_estimate(self, root):
         #TODO: improve height heuristic for tall trees.
-        if root is None:
+        if root is structures.Null:
             return 0
         tree_height = root.height()
         c = self._determine_height_coef(tree_height)
@@ -267,7 +266,7 @@ class TreePicture(InternalPicture):
     def _layout_nodes(self, parent, level_roots):
         sub_widths = []
         for subtree in level_roots:
-            if subtree is None:
+            if subtree is structures.Null:
                 sub_widths.append(0)
                 continue
             sub_width = self.width_dict.get(subtree, self._width_estimate(subtree))
@@ -285,7 +284,7 @@ class TreePicture(InternalPicture):
             sub_width = sub_widths[i]
             x = far_x_bound + sub_width/2
             far_x_bound += sub_width
-            if subtree is not None:
+            if subtree is not structures.Null:
                 new_node = TreePicture.TreeNode((x,y), subtree.data,
                                                 self.node_width, self.node_height,
                                                 self.node_shape, self.style)
@@ -321,7 +320,7 @@ class ArrayPicture(InternalPicture):
 
     @staticmethod
     def get_structure_type():
-        return structures.Array
+        return [structures.Array]
         
     def __init__(self, array, style={}, **kwargs):
         self.array = array.data
@@ -386,7 +385,7 @@ class StringLeaf(LeafPicture):
 
     @staticmethod
     def get_structure_type():
-        return structures.String
+        return [structures.String, str, int]
 
     def __init__(self, text, font_size=DEFAULTS["font_size"], **kwargs):
         self.text = str(text)

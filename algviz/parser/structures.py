@@ -235,7 +235,7 @@ class TreeNode(DataStructure):
 
     def is_leaf(self):
         return (len(self.children) == 0 or
-                all(child is None for child in self.children))
+                all(child is Null for child in self.children))
         
     def width(self):
         if self.is_leaf():
@@ -251,7 +251,7 @@ class TreeNode(DataStructure):
             return 1
         height = 0
         for child in self.children:
-            if child is not None:
+            if child is not Null:
                 child_height = child.height()
                 height = max(height,child_height)
         return height + 1
