@@ -156,6 +156,9 @@ class InternalPicture(Picture, metaclass = abc.ABCMeta):
                 continue
             contains_subpictures=True
             if isinstance(node.data, structures.Pointer):
+                ref = node.data.referent
+                if isinstance(ref, structures.Pointer):
+                     raise NotImplementedError("Pointers referring to other pointers is not yet supported.")
                 pointerTo = Picture.make_picture(node.data.referent, style=self.style)
                 connections.add_connection(node.center, pointerTo, anchor=pointer_anchor, pointer=True, pointer_style=self.pointer_style)
             else:
@@ -320,7 +323,7 @@ class ArrayPicture(InternalPicture):
 
     @staticmethod
     def get_structure_type():
-        return [structures.Array]
+        return [structures.Array, list]
         
     def __init__(self, array, style={}, **kwargs):
         self.array = array.data
