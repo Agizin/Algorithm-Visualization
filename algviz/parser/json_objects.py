@@ -120,7 +120,7 @@ class SnapshotDecoder(metaclass=Dispatcher):
 
     @Dispatcher.dispatch(Tokens.TREE_NODE_T)
     def tree_node_decode(self, tree_node, **kwargs):
-        return structures.TreeNode(data=tree_node.get(Tokens.DATA, structures.Null),
+        return structures.Tree(data=tree_node.get(Tokens.DATA, structures.Null),
                                    children=tree_node.get(Tokens.CHILDREN),
                                    **kwargs)
 

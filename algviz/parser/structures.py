@@ -173,7 +173,7 @@ class Node(DataStructure):
     # This is a minimal node that isn't responsible for its own edges.  This
     # allows for a more flexible graph implementation (i.e. allowing subgraphs
     # over the same nodes).  If you want to store edges within your node, use
-    # TreeNode or a subclass instead of this.
+    # Tree or a subclass instead of this.
     def __init__(self, data, **kwargs):
         super().__init__(**kwargs)
         self.data = data
@@ -262,7 +262,7 @@ class TreeNode(DataStructure):
 
     def __eq__(self, other):
         return (super().__eq__(other) and
-                isinstance(other, TreeNode) and
+                isinstance(other, Tree) and
                 self.data == other.data and
                 self.children == other.children)
 
