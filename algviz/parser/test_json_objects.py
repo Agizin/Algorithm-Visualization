@@ -180,6 +180,9 @@ class NullDecodingTestCase(GenericDecodingTestCase):
     def test_has_proper_metadata(self):
         self.assertIs(getattr(self.actual_object, "metadata", None), None)
 
+    def test_decodes_to_singleton(self):
+        self.assertIs(self.actual_object, self.expected_object)
+
 class OtherNullDecodingTestCase(NullDecodingTestCase):
 
     def set_up_expectations(self):

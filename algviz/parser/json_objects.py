@@ -33,6 +33,10 @@ aliases = {
     "T": Tokens.TYPE,
 }
 
+type_aliases = {
+    "tree": Tokens.TREE_NODE_T,
+}
+
 _type_tokens = tuple(getattr(Tokens, name) for name in dir(Tokens)
                      if name.endswith("_T") and not name.startswith("_"))
 _key_tokens = tuple(getattr(Tokens, name) for name in dir(Tokens)
@@ -246,6 +250,8 @@ def fix_aliases(obj):
                 else:
                     obj[aliases[token]] = obj[token]
                     del obj[token]
+        if Tokens.TYPE in obj and  obj[Tokens.TYPE] in type_aliases:
+            obj[Tokens.TYPE] = type_aliases[obj[Tokens.TYPE]]
     return obj
 
 class ValidationError(JSONObjectError):
