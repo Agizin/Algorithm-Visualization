@@ -109,7 +109,8 @@ class CompositionEngine:
         new_elements = []
         for connection in self.connections:
             subpic = connection.connect_pic
-            subpic.draw()
+            if not subpic.is_drawn():
+                subpic.draw()
             anchor = connection.anchor
             anchorPos = connection.connect_pic.get_anchor_position(anchor)
             #To place the subpicture, we first determine its location relative to the base

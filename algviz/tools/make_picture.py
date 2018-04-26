@@ -8,8 +8,12 @@ def make_picture_from_json(json_file, object_uid, outfile):
     with open(json_file,'r') as f:
         json_contents = f.read()
     assert(json_contents is not None)
+    print(json_contents)
     snapshot = json_objects.decode_json(json_contents)[0] #assumes only given single snapshot
-    structure = snapshot.obj_table.getuid(object_uid)
+    try:
+         structure = snapshot.obj_table.getuid(object_uid)
+    except KeyError:
+         raise KeyError("uid '{}' not found in structure or structure json not properly formatted".format(object_uid))
     pic = picture.Picture.make_picture(structure)
     pic.draw()
     pic.save(outfile)
