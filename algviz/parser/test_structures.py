@@ -57,9 +57,9 @@ class EdgeTestCase(DataStructuresTestMixin, unittest.TestCase):
                                structures.Node(1, uid="n1"),
                                uid="e")
 
-class TreeNodeTestCase(DataStructuresTestMixin, unittest.TestCase):
+class TreeTestCase(DataStructuresTestMixin, unittest.TestCase):
     def instance(self):
-        return structures.TreeNode(5, children=[structures.Null,
+        return structures.Tree(5, children=[structures.Null,
                                                 structures.Null],
                                    uid="tree")
 

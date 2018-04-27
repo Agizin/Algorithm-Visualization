@@ -25,7 +25,7 @@ class DisorganizedLayoutTestCase(unittest.TestCase):
 
     def test_elements_is_repeatable(self):
         layout = rec_layout.SimpleTreeLayout(
-            structures.TreeNode(structures.Null, uid="silly"),
+            structures.Tree(structures.Null, uid="silly"),
             choose_child_cls=layout_dispatch.make_layout_chooser({}),
             svg_hint=self.svg_hint)
         layout.scale(10)
@@ -45,4 +45,4 @@ class DisorganizedLayoutTestCase(unittest.TestCase):
 class TreeLayoutTestCaseMixin(unittest.TestCase):
     layout_cls = None
     def object_to_draw(self):
-        return structures.TreeNode(fuu)
+        return structures.Tree(fuu)

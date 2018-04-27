@@ -223,7 +223,7 @@ class Widget(DataStructure):
     def __hash__(self):
         return super().__hash__()
 
-class TreeNode(DataStructure):
+class Tree(DataStructure):
     """A node with some number of children in a fixed order.  Edges are implicit."""
     # A common superclass could be used for linked-list nodes, since linked
     # lists are just skinny trees
