@@ -6,7 +6,7 @@ def map_metadata_key_to_layout_subclass(config):
     return {}
 
 _default_mapping = {
-    structures.TreeNode: rec_layout.SimpleTreeLayout,
+    structures.Tree: rec_layout.SimpleTreeLayout,
     structures.String: rec_layout.StringLayout,
     int: rec_layout.StringReprLayout,
     float: rec_layout.StringReprLayout,

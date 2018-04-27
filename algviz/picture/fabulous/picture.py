@@ -175,7 +175,7 @@ class InternalPicture(Picture, metaclass = abc.ABCMeta):
             
 class TreePicture(InternalPicture):
     
-    class TreeNode(NodeElement):
+    class Tree(NodeElement):
         def __init__(self, center, data, width, height, shape=Shape.CIRCLE, style={}, **kwargs):
             self.data = data
             self.childNodes = []
@@ -199,7 +199,7 @@ class TreePicture(InternalPicture):
             return len(self.childNodes) == 0
 
         def add_child(self, child):
-            if isinstance(child, TreePicture.TreeNode):
+            if isinstance(child, TreePicture.Tree):
                 self.childNodes.append(child)
             else:
                 raise TypeError("{} is not a tree node".format(child))
@@ -227,7 +227,7 @@ class TreePicture(InternalPicture):
 
     @staticmethod
     def get_structure_type():
-        return [structures.TreeNode]
+        return [structures.Tree]
     
     def __init__(self, tree_root, style={}, **kwargs):
         self.root = tree_root
@@ -288,7 +288,7 @@ class TreePicture(InternalPicture):
             x = far_x_bound + sub_width/2
             far_x_bound += sub_width
             if subtree is not structures.Null:
-                new_node = TreePicture.TreeNode((x,y), subtree.data,
+                new_node = TreePicture.Tree((x,y), subtree.data,
                                                 self.node_width, self.node_height,
                                                 self.node_shape, self.style)
                 parent.add_child(new_node)
@@ -310,7 +310,7 @@ class TreePicture(InternalPicture):
         root_x = self.width/2
         root_y = self.node_height/2+self.node_sep
         root_center = (root_x, root_y)
-        self.root_node = TreePicture.TreeNode(root_center, self.root.data,
+        self.root_node = TreePicture.Tree(root_center, self.root.data,
                                          self.node_width, self.node_height,
                                          self.node_shape, self.style)
         svg_engine = SVGEngine(self.width, self.height)

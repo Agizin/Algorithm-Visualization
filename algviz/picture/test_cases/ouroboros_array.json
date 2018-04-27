@@ -1,0 +1,6 @@
+[
+    [
+        {"type": "array", "uid": "foo", "var": "target",
+         "data": [1, 2, 3, {"type": "ptr", "uid": "p", "data": "foo"}]}
+    ]
+]
