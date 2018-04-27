@@ -3,6 +3,7 @@ import unittest
 from algviz.parser import json_objects, structures
 from . import output
 from . import visitors
+from algviz.interface import tree_test_code
 from .testutil import TempFileMixin
 
 class VisitorTestCaseMixin(TempFileMixin):
@@ -93,3 +94,23 @@ class ArrayVisitorTestCase(VisitorTestCaseMixin, unittest.TestCase):
         arr = self.to_json_and_back([1, 2, 3])
         self.assertIsInstance(arr, structures.Array)
         self.assertEqual(list(arr), [1, 2, 3])
+
+class TreeVistorTestCase (unittest.TestCase):
+    visitor_cls = tree_test_code.TreeNode
+    to_hell_and_back = []
+    
+    def sample_instances(self):
+        return tree_test_code.TreeNode([1, 2, 3])
+
+    def test_array_export_and_import(self):
+        arr = self.to_hell_and_back = [1, 2, 3]
+        self.assertIsInstance
+
+    def test_isLeaf(self):
+        return self.sample_instances().isleaf
+    def test_isbinary(self):
+        return self.sample_instances().isbinary
+    def test_infix(self):
+        return self.sample_instances().infix
+    def test_tostring(self):
+        return self.sample_instances().tostring
