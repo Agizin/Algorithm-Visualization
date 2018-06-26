@@ -20,3 +20,17 @@ def parse(file):
         line = file.readline()
     return contents
         
+def unparse(file, tree):
+    for thing in tree:
+        if type(thing) == str:
+            print(thing, file=file)
+        elif type(thing) == dict:
+            if 'contents' in thing:
+                print("@algviz begin", thing['command'], thing['arguments'],
+                      sep=' ', file=file)
+                unparse(file, thing['contents'])
+                print("@algviz end", thing['command'], thing['arguments'],
+                      sep=' ', file=file)
+            else:
+                print("@algviz", thing['command'], thing['arguments'],
+                      sep=' ', file=file)
