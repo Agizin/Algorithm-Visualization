@@ -34,3 +34,5 @@ def unparse(file, tree):
             else:
                 print("@algviz", thing['command'], thing['arguments'],
                       sep=' ', file=file)
+        elif type(thing) == list:
+            unparse(file, thing);
