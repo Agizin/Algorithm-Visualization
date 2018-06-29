@@ -29,8 +29,7 @@ def unparse(file, tree):
                 print("@algviz begin", thing['command'], thing['arguments'],
                       sep=' ', file=file)
                 unparse(file, thing['contents'])
-                print("@algviz end", thing['command'], thing['arguments'],
-                      sep=' ', file=file)
+                print("@algviz end", file=file)
             else:
                 print("@algviz", thing['command'], thing['arguments'],
                       sep=' ', file=file)
